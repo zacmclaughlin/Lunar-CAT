@@ -1,2 +1,2 @@
-# cat
-Centroiding Algorithms Testing
+# Lunar-CAT
+Lunar Centroiding Algorithms Testing
