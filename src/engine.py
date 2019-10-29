@@ -22,16 +22,16 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq):
         warmup_iters = min(1000, len(data_loader) - 1)
 
         lr_scheduler = utils.warmup_lr_scheduler(optimizer, warmup_iters, warmup_factor)
-    # i = 0
+    i = 0
     for images, targets in metric_logger.log_every(data_loader, print_freq, header):
-        print(len(images[0]), len(images), images[0].shape)
+        print("image IDs: ")
+        print(target["image_id"] for target in targets)
+        print("end image IDs for iteration", i)
         images = list(image.to(device) for image in images)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
-        # i = i + 1
-        # print(i, "loss dict start")
+        i = i + 1
         loss_dict = model(images, targets)
-        # print(i, "passed")
 
         losses = sum(loss for loss in loss_dict.values())
 
@@ -87,7 +87,7 @@ def evaluate(model, data_loader, device):
         image = list(img.to(device) for img in image)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
-        torch.cuda.synchronize()
+        # torch.cuda.synchronize()
         model_time = time.time()
         outputs = model(image)
 
