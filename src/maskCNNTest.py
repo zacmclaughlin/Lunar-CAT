@@ -12,49 +12,6 @@ from engine import train_one_epoch, evaluate
 import utils
 import CraterDataset
 
-# load a model pre-trained pre-trained on COCO
-model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
-
-# replace the classifier with a new one, that has
-# num_classes which is user-defined
-num_classes = 2  # 1 class (crater) + background
-# get number of input features for the classifier
-in_features = model.roi_heads.box_predictor.cls_score.in_features
-# replace the pre-trained head with a new one
-model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
-
-# load a pre-trained model for classification and return
-# only the features
-backbone = torchvision.models.mobilenet_v2(pretrained=True).features
-# FasterRCNN needs to know the number of
-# output channels in a backbone. For mobilenet_v2, it's 1280
-# so we need to add it here
-backbone.out_channels = 1280
-
-# let's make the RPN generate 5 x 3 anchors per spatial
-# location, with 5 different sizes and 3 different aspect
-# ratios. We have a Tuple[Tuple[int]] because each feature
-# map could potentially have different sizes and
-# aspect ratios
-anchor_generator = AnchorGenerator(sizes=((32, 64, 128, 256, 512),),
-                                   aspect_ratios=((0.5, 1.0, 2.0),))
-
-# let's define what are the feature maps that we will
-# use to perform the region of interest cropping, as well as
-# the size of the crop after rescaling.
-# if your backbone returns a Tensor, featmap_names is expected to
-# be [0]. More generally, the backbone should return an
-# OrderedDict[Tensor], and in featmap_names you can choose which
-# feature maps to use.
-roi_pooler = torchvision.ops.MultiScaleRoIAlign(featmap_names=[0],
-                                                output_size=7,
-                                                sampling_ratio=2)
-
-# put the pieces together inside a FasterRCNN model
-model = FasterRCNN(backbone,
-                   num_classes=2,
-                   rpn_anchor_generator=anchor_generator,
-                   box_roi_pool=roi_pooler)
 
 def get_model_instance_segmentation(num_classes):
     # load an instance segmentation model pre-trained pre-trained on COCO
@@ -96,7 +53,7 @@ def main():
     transform = transforms.Compose(
         [CraterDataset.Rescale(401), CraterDataset.SquareCrop(400), CraterDataset.ToTensor()])
 
-    # zacs fucking dumbass dataset
+    # zacs dataset
     train_dataset = CraterDataset.CraterDataset(DATA_PATH, ANNOTATIONS_PATH, transform)
     test_dataset = CraterDataset.CraterDataset(DATA_PATH_TEST, ANNOTATIONS_PATH_TEST, transform)
 

@@ -74,11 +74,8 @@ class CraterDataset(Dataset):
             img = segmented_image
             center = (int((sample['landmarks'][i][0])), int((sample['landmarks'][i][1])))
             radius = int((sample['landmarks'][i][2]))
-            # color = ((255 - (i+1)*2) % 255, 0, 0)
             color = (255 - (i + 1) * 2) % 255
             cv2.circle(img, center, radius, color, -1)
-
-        # segmented_image = cv2.cvtColor(segmented_image, cv2.COLOR_BGR2GRAY)
 
         segmented_image = Image.fromarray(segmented_image)
         segmented_image.save(self.root_dir + "CraterMasks/" +
@@ -123,6 +120,7 @@ class CraterDataset(Dataset):
 
         target = {}
         target["landmarks"] = sample["landmarks"]
+        target["landmarks_lengths"] = torch.tensor(sample['landmarks'].shape[0])
         target["boxes"] = boxes
         target["labels"] = labels
         target["masks"] = masks
@@ -216,7 +214,7 @@ class ToTensor(object):
         # numpy image: H x W x C
         # torch image: C X H X W
         image = image.transpose((2, 0, 1))
-        return {'image': torch.from_numpy(image),
+        return {'image': torch.from_numpy(image).float(),
                 'landmarks': torch.from_numpy(landmarks)}
 
 
@@ -235,7 +233,7 @@ def collate_fn_crater_padding(batch):
     Pads batch of variable length
     '''
     # get sequence lengths
-    lengths = torch.tensor([t[1]['landmarks'].shape[0] for t in batch])
+    # lengths = torch.tensor([t[1]['landmarks'].shape[0] for t in batch])
 
     # pad
     # batch = [[t[0], t[1]] for t in batch]
@@ -245,8 +243,9 @@ def collate_fn_crater_padding(batch):
         batch[i][1]['landmarks'] = padded_batch_annotations[i]
 
     # compute mask
-    mask = (batch != 0)
-    return batch, lengths, mask
+    # mask = (batch != 0)
+    return tuple(zip(*batch))
+    # return batch  #, lengths, mask
 
 
 def create_circular_mask(h, w, center=None, radius=None):
