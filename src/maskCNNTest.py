@@ -47,8 +47,8 @@ def main():
 
     DATA_PATH = '../data/Apollo_16_Rev_17/'
     ANNOTATIONS_PATH = '../data/Apollo_16_Rev_17/crater17_annotations.json'
-    DATA_PATH_TEST = '../data/Apollo_16_Rev_17/'
-    ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_17/crater17_annotations.json'
+    DATA_PATH_TEST = '../data/Apollo_16_Rev_28/'
+    ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_28/crater28_annotations.json'
 
     transform = transforms.Compose(
         [CraterDataset.Rescale(401), CraterDataset.SquareCrop(400), CraterDataset.ToTensor()])
@@ -67,20 +67,18 @@ def main():
     # dataset_test = CraterDataset.CraterDataset('PennFudanPed', get_transform(train=False))
 
     # split the dataset in train and test set
-    indices = torch.randperm(len(dataset)).tolist()
-    dataset = torch.utils.data.Subset(dataset, indices[:-50])
-    dataset_test = torch.utils.data.Subset(dataset_test, indices[-50:])
+    # indices = torch.randperm(len(dataset)).tolist()
+    # dataset = torch.utils.data.Subset(dataset, indices[:-30])
+    # dataset_test = torch.utils.data.Subset(dataset_test, indices[-30:])
 
     # define training and validation data loaders
     data_loader = torch.utils.data.DataLoader(
         dataset, batch_size=2, shuffle=True, num_workers=4,
         collate_fn=CraterDataset.collate_fn_crater_padding)
-        # collate_fn=utils.collate_fn)
 
     data_loader_test = torch.utils.data.DataLoader(
         dataset_test, batch_size=1, shuffle=False, num_workers=4,
         collate_fn=CraterDataset.collate_fn_crater_padding)
-    # collate_fn=utils.collate_fn)
 
     # get the model using our helper function
     model = get_model_instance_segmentation(num_classes)
@@ -101,12 +99,14 @@ def main():
     num_epochs = 10
 
     for epoch in range(num_epochs):
+        print("Epoch: ", epoch)
         # train for one epoch, printing every 10 iterations
         train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10)
         # update the learning rate
         lr_scheduler.step()
         # evaluate on the test dataset
         evaluate(model, data_loader_test, device=device)
+        print("end epoch", epoch)
 
     print("That's it!")
 

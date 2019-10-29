@@ -209,11 +209,8 @@ class MetricLogger(object):
             ])
         MB = 1024.0 * 1024.0
         for obj in iterable:
-            print(iterable, print_freq, header)
             data_time.update(time.time() - end)
             yield obj
-            print(iterable, print_freq, header)
-
             iter_time.update(time.time() - end)
 
             if i % print_freq == 0 or i == len(iterable) - 1:
