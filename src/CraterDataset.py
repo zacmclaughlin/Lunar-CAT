@@ -77,15 +77,16 @@ class CraterDataset(Dataset):
             color = (255 - (i + 1) * 2) % 255
             cv2.circle(img, center, radius, color, -1)
 
+        # note that we haven't converted the mask to RGB,
+        # because each color corresponds to a different instance
+        # with 0 being background
+        mask = cv2.cvtColor(segmented_image, cv2.COLOR_BGR2GRAY)
+
         segmented_image = Image.fromarray(segmented_image)
         segmented_image.save(self.root_dir + "CraterMasks/" +
                              self.landmarks_frame[idx_keys]['filename'].split(".")[0] +
                              "_mask.jpg")
 
-        # note that we haven't converted the mask to RGB,
-        # because each color corresponds to a different instance
-        # with 0 being background
-        mask = segmented_image
         # convert the PIL Image into a numpy array
         mask = np.array(mask)
         # instances are encoded as different colors
@@ -93,13 +94,17 @@ class CraterDataset(Dataset):
         # first id is the background, so remove it
         obj_ids = obj_ids[1:]
 
+        # split the color-encoded mask into a set
+        # of binary masks
+        masks = mask == obj_ids[:, None, None]
+
         image_id = torch.tensor([idx])
 
         # get bounding box coordinates for each mask
         num_objs = len(obj_ids)
         boxes = []
         for i in range(num_objs):
-            pos = np.where(mask)
+            pos = np.where(masks[i])
             xmin = np.min(pos[1])
             xmax = np.max(pos[1])
             ymin = np.min(pos[0])
@@ -111,22 +116,19 @@ class CraterDataset(Dataset):
 
         # there is only one class. and it is CRATER
         labels = torch.ones((num_objs,), dtype=torch.int64)
-        masks = torch.as_tensor(mask.transpose((2, 0, 1)), dtype=torch.uint8)
+        masks = torch.as_tensor(masks, dtype=torch.uint8)
 
         area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
 
         # suppose all instances are not crowd
         is_crowd = torch.zeros((num_objs,), dtype=torch.int64)
 
-        target = {}
-        target["landmarks"] = sample["landmarks"]
-        target["landmarks_lengths"] = torch.tensor(sample['landmarks'].shape[0])
-        target["boxes"] = boxes
-        target["labels"] = labels
-        target["masks"] = masks
-        target["image_id"] = image_id
-        target["area"] = area
-        target["iscrowd"] = is_crowd
+        target = {"boxes": boxes,
+                  "labels": labels,
+                  "masks": masks,
+                  "image_id": image_id,
+                  "area": area,
+                  "iscrowd": is_crowd}
 
         return image, target
 
@@ -218,34 +220,21 @@ class ToTensor(object):
                 'landmarks': torch.from_numpy(landmarks)}
 
 
-def tag_crater(image, landmarks):
-    """Show image with evil craters"""
-    for i in range(len(landmarks)):
-        plt.imshow(image)
-        ax = plt.gca()
-        c = plt.Circle((landmarks[i, 0], landmarks[i, 1]), radius=landmarks[i, 2], fill=False, color='r')
-        ax.add_artist(c)
-        plt.pause(.001)
+# def tag_crater(image, landmarks):
+#     """Show image with evil craters"""
+#     for i in range(len(landmarks)):
+#         plt.imshow(image)
+#         ax = plt.gca()
+#         c = plt.Circle((landmarks[i, 0], landmarks[i, 1]), radius=landmarks[i, 2], fill=False, color='r')
+#         ax.add_artist(c)
+#         plt.pause(.001)
 
 
 def collate_fn_crater_padding(batch):
     '''
     Pads batch of variable length
     '''
-    # get sequence lengths
-    # lengths = torch.tensor([t[1]['landmarks'].shape[0] for t in batch])
-
-    # pad
-    # batch = [[t[0], t[1]] for t in batch]
-    batch_annotations = [t[1]['landmarks'] for t in batch]
-    padded_batch_annotations = torch.nn.utils.rnn.pad_sequence(batch_annotations)
-    for i in range(len(batch)):
-        batch[i][1]['landmarks'] = padded_batch_annotations[i]
-
-    # compute mask
-    # mask = (batch != 0)
     return tuple(zip(*batch))
-    # return batch  #, lengths, mask
 
 
 def create_circular_mask(h, w, center=None, radius=None):

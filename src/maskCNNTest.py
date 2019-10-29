@@ -73,11 +73,11 @@ def main():
 
     # define training and validation data loaders
     data_loader = torch.utils.data.DataLoader(
-        dataset, batch_size=2, shuffle=True, num_workers=4,
+        dataset, batch_size=2, shuffle=True, num_workers=0,
         collate_fn=CraterDataset.collate_fn_crater_padding)
 
     data_loader_test = torch.utils.data.DataLoader(
-        dataset_test, batch_size=1, shuffle=False, num_workers=4,
+        dataset_test, batch_size=1, shuffle=False, num_workers=0,
         collate_fn=CraterDataset.collate_fn_crater_padding)
 
     # get the model using our helper function
@@ -101,7 +101,7 @@ def main():
     for epoch in range(num_epochs):
         print("Epoch: ", epoch)
         # train for one epoch, printing every 10 iterations
-        train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10)
+        train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10) # this worked
         # update the learning rate
         lr_scheduler.step()
         # evaluate on the test dataset
