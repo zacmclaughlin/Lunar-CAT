@@ -48,8 +48,8 @@ acc_list = []
 for epoch in range(num_epochs):
     for i, batch_instance in enumerate(train_loader):
         batch_instance, annotation_lengths, mask_status = batch_instance[0], batch_instance[1], batch_instance[2]
-        images = torch.stack([t['image'] for t in batch_instance])
-        landmarks = torch.stack([t['landmarks'] for t in batch_instance])
+        images = torch.stack([t[0] for t in batch_instance])
+        landmarks = torch.stack([t[1]['landmarks'] for t in batch_instance])
         print("epoch: ", epoch, "| Batch: ", i)
 
 print("++++++++ Access Tests Passed ++++++++++")

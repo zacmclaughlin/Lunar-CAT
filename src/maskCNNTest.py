@@ -122,7 +122,7 @@ def main():
 
     data_loader_test = torch.utils.data.DataLoader(
         dataset_test, batch_size=1, shuffle=False, num_workers=4,
-        collate_fn = CraterDataset.collate_fn_crater_padding)
+        collate_fn=CraterDataset.collate_fn_crater_padding)
     # collate_fn=utils.collate_fn)
 
     # get the model using our helper function

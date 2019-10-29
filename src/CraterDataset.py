@@ -52,8 +52,6 @@ class CraterDataset(Dataset):
 
         image = io.imread(image_name)
 
-        # image = Image.open(image_name).convert("RGB")
-
         idx_annotations = []
 
         for i in range(len(self.landmarks_frame[idx_keys]['regions'])):
@@ -62,19 +60,15 @@ class CraterDataset(Dataset):
             r = self.landmarks_frame[idx_keys]['regions'][i]['shape_attributes']['r']
             idx_annotations.append([float(cx), float(cy), float(r)])
 
-        # sample = {'image': np.array(image), 'landmarks': np.array(idx_annotations)}
         sample = {'image': image, 'landmarks': np.array(idx_annotations)}
 
         if self.transform is not None:
             sample = self.transform(sample)
 
-        # image = sample['image']
+        image = sample['image']
 
         # create the black canvas
-        # segmented_image = np.zeros(shape=(sample['image'].shape[0],
-        #                                   sample['image'].shape[1],
-        #                                   sample['image'].shape[2]), dtype="uint8")
-        segmented_image = np.zeros(shape=(image.shape[0], image.shape[1], image.shape[2]), dtype="uint8")
+        segmented_image = np.zeros(shape=(image.shape[1], image.shape[2], image.shape[0]), dtype="uint8")
 
         for i in range(len(self.landmarks_frame[idx_keys]['regions'])):
             img = segmented_image
@@ -120,22 +114,24 @@ class CraterDataset(Dataset):
 
         # there is only one class. and it is CRATER
         labels = torch.ones((num_objs,), dtype=torch.int64)
-        masks = torch.as_tensor(mask, dtype=torch.uint8)
+        masks = torch.as_tensor(mask.transpose((2, 0, 1)), dtype=torch.uint8)
 
         area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
 
         # suppose all instances are not crowd
         is_crowd = torch.zeros((num_objs,), dtype=torch.int64)
 
-        sample["boxes"] = boxes
-        sample["labels"] = labels
-        sample["masks"] = masks
-        sample["image_id"] = image_id
-        sample["area"] = area
-        sample["iscrowd"] = is_crowd
+        target = {}
+        target["landmarks"] = sample["landmarks"]
+        target["boxes"] = boxes
+        target["labels"] = labels
+        target["masks"] = masks
+        target["image_id"] = image_id
+        target["area"] = area
+        target["iscrowd"] = is_crowd
 
         # return image, sample
-        return sample
+        return image, sample
 
 
 class SquareCrop(object):
@@ -240,14 +236,14 @@ def collate_fn_crater_padding(batch):
     Pads batch of variable length
     '''
     # get sequence lengths
-    lengths = torch.tensor([t['landmarks'].shape[0] for t in batch])
+    lengths = torch.tensor([t[1]['landmarks'].shape[0] for t in batch])
 
     # pad
-    batch = [{'image': t['image'], 'landmarks': t['landmarks']} for t in batch]
-    batch_annotations = [t['landmarks'] for t in batch]
+    # batch = [[t[0], t[1]] for t in batch]
+    batch_annotations = [t[1]['landmarks'] for t in batch]
     padded_batch_annotations = torch.nn.utils.rnn.pad_sequence(batch_annotations)
     for i in range(len(batch)):
-        batch[i]['landmarks'] = padded_batch_annotations[i]
+        batch[i][1]['landmarks'] = padded_batch_annotations[i]
 
     # compute mask
     mask = (batch != 0)
