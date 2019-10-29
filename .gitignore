@@ -1,0 +1,10 @@
+.DS_Store
+*.pdf
+.idea
+*.jpg
+*.tar.gz
+*.tar
+*.png
+__pycache__
+__pycache__/CraterDataset.cpython-36.pyc
+sofia/PennFudanPed/
