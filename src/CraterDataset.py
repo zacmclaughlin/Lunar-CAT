@@ -130,8 +130,7 @@ class CraterDataset(Dataset):
         target["area"] = area
         target["iscrowd"] = is_crowd
 
-        # return image, sample
-        return image, sample
+        return image, target
 
 
 class SquareCrop(object):
