@@ -68,9 +68,9 @@ def main():
 
     # split the dataset in train and test set
     indices = torch.randperm(len(dataset)).tolist()
-    dataset = torch.utils.data.Subset(dataset, indices[:-10])
+    dataset = torch.utils.data.Subset(dataset, indices[:-50])
     indices = torch.randperm(len(dataset_test)).tolist()
-    dataset_test = torch.utils.data.Subset(dataset_test, indices[-10:])
+    dataset_test = torch.utils.data.Subset(dataset_test, indices[-50:])
 
     # define training and validation data loaders
     data_loader = torch.utils.data.DataLoader(
@@ -97,19 +97,15 @@ def main():
                                                    gamma=0.1)
 
     # let's train it for 10 epochs
-    num_epochs = 2
+    num_epochs = 10
 
     for epoch in range(num_epochs):
-        print("Epoch: ", epoch)
         # train for one epoch, printing every 10 iterations
         train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10) # this worked
-        print("dlfkalk")
         # update the learning rate
         lr_scheduler.step()
-        print("ldjkflks")
         # evaluate on the test dataset
         evaluate(model, data_loader_test, device=device)
-        print("end epoch", epoch)
 
     print("That's it!")
 
