@@ -15,14 +15,14 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq):
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter('lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
     header = 'Epoch: [{}]'.format(epoch)
-
+    i = 0
     lr_scheduler = None
     if epoch == 0:
         warmup_factor = 1. / 1000
         warmup_iters = min(1000, len(data_loader) - 1)
 
         lr_scheduler = utils.warmup_lr_scheduler(optimizer, warmup_iters, warmup_factor)
-    i = 0
+
     for images, targets in metric_logger.log_every(data_loader, print_freq, header):
         print("image IDs: ")
         print(target["image_id"] for target in targets)

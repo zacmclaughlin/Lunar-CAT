@@ -11,8 +11,17 @@ import transforms as T
 from engine import train_one_epoch, evaluate
 import utils
 import CraterDataset
+from visualize_data import ImageView
 from torchsummary import summary
 from PIL import Image
+import sys
+from PyQt5.QtWidgets import QApplication
+
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
 
 def get_model_instance_segmentation(num_classes):
     # load an instance segmentation model pre-trained pre-trained on COCO
@@ -64,12 +73,9 @@ def main():
     dataset = CraterDataset.CraterDataset(DATA_PATH, ANNOTATIONS_PATH, transform)
     dataset_test = CraterDataset.CraterDataset(DATA_PATH_TEST, ANNOTATIONS_PATH_TEST, transform)
 
-    # dataset = CraterDataset.CraterDataset('PennFudanPed', get_transform(train=True))
-    # dataset_test = CraterDataset.CraterDataset('PennFudanPed', get_transform(train=False))
-
     # split the dataset in train and test set
     indices = torch.randperm(len(dataset)).tolist()
-    dataset = torch.utils.data.Subset(dataset, indices[:-4])
+    dataset = torch.utils.data.Subset(dataset, indices[-4:])
     indices = torch.randperm(len(dataset_test)).tolist()
     dataset_test = torch.utils.data.Subset(dataset_test, indices[-4:])
 
@@ -102,7 +108,7 @@ def main():
 
     for epoch in range(num_epochs):
         # train for one epoch, printing every 10 iterations
-        train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10) # this worked
+        train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10)
         # update the learning rate
         lr_scheduler.step()
         # evaluate on the test dataset
@@ -115,10 +121,44 @@ def main():
     # batching them together and normalizing
     output = model([image_tensor])
     print(output)
-    summary(model, (1, 28, 28))
+    # summary(model, (1, 28, 28))
 
     print("That's it!")
 
+    # pick one image from the test set
+    img, _ = dataset_test[0]
+    # put the model in evaluation mode
+    model.eval()
+    with torch.no_grad():
+        prediction = model([img.to(device)])
+
+    a_crater = Image.fromarray(img.mul(255).permute(1, 2, 0).byte().numpy())
+    a_guess_mask = Image.fromarray(prediction[0]['masks'][0, 0].mul(255).byte().cpu().numpy())
+    a_craters_boxes = prediction[0]['boxes']
+
+    # show data
+    app = QApplication(sys.argv)
+
+    imageshow = ImageView()
+
+    imageshow.show_image([a_crater, a_guess_mask])
+
+    imageshow.show()
+
+    sys.exit(app.exec_())
+
+    # plt.ion()
+    # plt.figure()
+    # plt.subplot(211)
+    # plt.imshow(a_crater)
+    # cv2.imshow("kill", np.asarray(a_crater))
+    # plt.subplot(212)
+    # plt.imshow(a_guess_mask)
+    # plt.pause(5)
+    # plt.show()
+
+
+    # cv2.imshow("kill 2", np.asarray(a_guess_mask))
 
 if __name__ == "__main__":
     main()

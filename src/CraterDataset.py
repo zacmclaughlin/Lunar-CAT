@@ -238,7 +238,7 @@ def collate_fn_crater_padding(batch):
     return tuple(zip(*batch))
 
 
-def get_test_image(root_dir='../data/Apollo_16_Rev_63/', image_name='random'):
+def get_test_image(root_dir='../data/Apollo_16_Rev_63/JPGImages/', image_name='random'):
     if image_name == 'random':
         image_name = random.choice(os.listdir(root_dir))
         print(image_name)
