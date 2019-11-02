@@ -4,24 +4,26 @@ from torch import utils
 from torch.utils import data
 from torchvision import transforms
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
-from torchvision.models.detection.faster_rcnn import FasterRCNN
-from torchvision.models.detection.rpn import AnchorGenerator
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 import transforms as T
 from engine import train_one_epoch, evaluate
-import utils
+# import utils
 import CraterDataset
 from visualize_data import ImageView
-from torchsummary import summary
 from PIL import Image
 import sys
 from PyQt5.QtWidgets import QApplication
+import read_write_objects
+from os import listdir
+from os.path import isfile, join
 
-import cv2
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from matplotlib.figure import Figure
+
+# Pathways
+DATA_PATH = '../data/Apollo_16_Rev_17/'
+ANNOTATIONS_PATH = '../data/Apollo_16_Rev_17/crater17_annotations.json'
+DATA_PATH_TEST = '../data/Apollo_16_Rev_28/'
+ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_28/crater28_annotations.json'
+
 
 def get_model_instance_segmentation(num_classes):
     # load an instance segmentation model pre-trained pre-trained on COCO
@@ -51,21 +53,31 @@ def get_transform(train):
     return T.Compose(transforms)
 
 
-def main():
+def create_model_output(model, path_to_images, model_filename):
+    images = [f for f in listdir(path_to_images) if isfile(join(path_to_images, f))]
+    image_tensors = []
+    for image in range(len(images)):
+        image_tensors.append(CraterDataset.get_test_image(root_dir=path_to_images,
+                                                          image_name=image))
+        # pass a list of (potentially different sized) tensors
+        # to the model, in 0-1 range. The model will take care of
+        # batching them together and normalizing
+
+    # get output dictionary
+    output = model(image_tensors)
+
+    output_network_test = '../output/' + model_filename + '.p'
+    read_write_objects.save_obj_to_file(output_network_test, output)  # save to file
+
+    return output
+
+
+def train_and_evaluate(number_of_images):
     # train on the GPU or on the CPU, if a GPU is not available
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-    DATA_PATH = '../data/Apollo_16_Rev_17/'
-    ANNOTATIONS_PATH = '../data/Apollo_16_Rev_17/crater17_annotations.json'
-    DATA_PATH_TEST = '../data/Apollo_16_Rev_28/'
-    ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_28/crater28_annotations.json'
-
     transform = transforms.Compose(
         [CraterDataset.Rescale(401), CraterDataset.SquareCrop(400), CraterDataset.ToTensor()])
-
-    # zacs dataset
-    train_dataset = CraterDataset.CraterDataset(DATA_PATH, ANNOTATIONS_PATH, transform)
-    test_dataset = CraterDataset.CraterDataset(DATA_PATH_TEST, ANNOTATIONS_PATH_TEST, transform)
 
     # our dataset has two classes only - background and person
     num_classes = 2
@@ -75,9 +87,9 @@ def main():
 
     # split the dataset in train and test set
     indices = torch.randperm(len(dataset)).tolist()
-    dataset = torch.utils.data.Subset(dataset, indices[-4:])
+    dataset = torch.utils.data.Subset(dataset, indices[-number_of_images:])
     indices = torch.randperm(len(dataset_test)).tolist()
-    dataset_test = torch.utils.data.Subset(dataset_test, indices[-4:])
+    dataset_test = torch.utils.data.Subset(dataset_test, indices[-number_of_images:])
 
     # define training and validation data loaders
     data_loader = torch.utils.data.DataLoader(
@@ -114,19 +126,17 @@ def main():
         # evaluate on the test dataset
         evaluate(model, data_loader_test, device=device)
 
-    # image = Image.open('/ path / to / an / image.jpg')
-    image_tensor = CraterDataset.get_test_image()
-    # pass a list of (potentially different sized) tensors
-    # to the model, in 0-1 range. The model will take care of
-    # batching them together and normalizing
-    output = model([image_tensor])
-    print(output)
-    # summary(model, (1, 28, 28))
+    # confirm finish
+    print("Finished training and evaluating")
 
-    print("That's it!")
+    return model, dataset, dataset_test
 
+
+def display_data(model, dataset):
+    # train on the GPU or on the CPU, if a GPU is not available
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     # pick one image from the test set
-    img, _ = dataset_test[0]
+    img, _ = dataset[0]
     # put the model in evaluation mode
     model.eval()
     with torch.no_grad():
@@ -140,25 +150,21 @@ def main():
     app = QApplication(sys.argv)
 
     imageshow = ImageView()
-
     imageshow.show_image([a_crater, a_guess_mask])
-
     imageshow.show()
 
     sys.exit(app.exec_())
 
-    # plt.ion()
-    # plt.figure()
-    # plt.subplot(211)
-    # plt.imshow(a_crater)
-    # cv2.imshow("kill", np.asarray(a_crater))
-    # plt.subplot(212)
-    # plt.imshow(a_guess_mask)
-    # plt.pause(5)
-    # plt.show()
 
+def main():
+    model, training_data, evaluation_data = train_and_evaluate(number_of_images=2)
 
-    # cv2.imshow("kill 2", np.asarray(a_guess_mask))
+    create_model_output(model, '../data/Apollo_16_Rev_63/JPGImages/', 'bad_output')
+
+    display_data(model=model, dataset=evaluation_data)
+
+    return
+
 
 if __name__ == "__main__":
     main()

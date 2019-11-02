@@ -8,3 +8,4 @@
 __pycache__
 __pycache__/CraterDataset.cpython-36.pyc
 sofia/PennFudanPed/
+*.p
