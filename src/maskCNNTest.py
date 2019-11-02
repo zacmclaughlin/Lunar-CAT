@@ -17,6 +17,8 @@ from os.path import isfile, join
 # image data imports
 from PIL import Image
 from PyQt5.QtWidgets import QApplication
+import numpy as np
+import cv2
 
 # local imports
 import transforms as T
@@ -123,7 +125,7 @@ def train_and_evaluate(number_of_images):
                                                    step_size=3,
                                                    gamma=0.1)
 
-    # let's train it for 10 epochs
+    # let's train it for x epochs
     num_epochs = 1
 
     for epoch in range(num_epochs):
@@ -150,9 +152,18 @@ def display_data(model, dataset):
     with torch.no_grad():
         prediction = model([img.to(device)])
 
-    a_crater = Image.fromarray(img.mul(255).permute(1, 2, 0).byte().numpy())
+    a_crater = img.mul(255).permute(1, 2, 0).byte().numpy()
     a_guess_mask = Image.fromarray(prediction[0]['masks'][0, 0].mul(255).byte().cpu().numpy())
-    a_craters_boxes = prediction[0]['boxes']
+
+    bounding_boxes = np.asarray(prediction[0]['boxes'])
+    for i in range(len(bounding_boxes)):
+        a_crater = cv2.rectangle(a_crater,
+                      (bounding_boxes[i][0], bounding_boxes[i][1]),
+                      (bounding_boxes[i][0], bounding_boxes[i][1]),
+                      (0, 255, 0), 1)
+
+    # print(a_craters_boxes)
+    a_crater = Image.fromarray(a_crater)
 
     # show data
     app = QApplication(sys.argv)
@@ -167,7 +178,7 @@ def display_data(model, dataset):
 def main():
     model, training_data, evaluation_data = train_and_evaluate(number_of_images=2)
 
-    create_model_output(model, '../data/Apollo_16_Rev_63/JPGImages/', 'bad_output')
+    # create_model_output(model, '../data/Apollo_16_Rev_63/JPGImages/', 'bad_output')
 
     display_data(model=model, dataset=evaluation_data)
 

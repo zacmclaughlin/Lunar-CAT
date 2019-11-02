@@ -3,7 +3,7 @@ from PyQt5 import QtGui
 from PyQt5.QtWidgets import QWidget, QVBoxLayout
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-plt.style.use("ggplot") # ggplot seaborn
+# plt.style.use("ggplot") # ggplot seaborn
 from matplotlib.figure import Figure
 
 
@@ -24,7 +24,7 @@ class ImageView(QWidget):
         super(QWidget, self).__init__(parent)
         self.dpi = 100
         self.fig = Figure((5.0, 3.0), dpi=self.dpi, facecolor=(1, 1, 1), edgecolor=(0, 0, 0))
-        self.axes =[]
+        self.axes = []
         self.canvas = FigureCanvas(self.fig)
         self.canvas.setParent(self)
         self.toolbar = NavigationToolbar(self.canvas, self)
