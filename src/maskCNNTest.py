@@ -11,7 +11,8 @@ import transforms as T
 from engine import train_one_epoch, evaluate
 import utils
 import CraterDataset
-
+from torchsummary import summary
+from PIL import Image
 
 def get_model_instance_segmentation(num_classes):
     # load an instance segmentation model pre-trained pre-trained on COCO
@@ -68,9 +69,9 @@ def main():
 
     # split the dataset in train and test set
     indices = torch.randperm(len(dataset)).tolist()
-    dataset = torch.utils.data.Subset(dataset, indices[:-50])
+    dataset = torch.utils.data.Subset(dataset, indices[:-4])
     indices = torch.randperm(len(dataset_test)).tolist()
-    dataset_test = torch.utils.data.Subset(dataset_test, indices[-50:])
+    dataset_test = torch.utils.data.Subset(dataset_test, indices[-4:])
 
     # define training and validation data loaders
     data_loader = torch.utils.data.DataLoader(
@@ -97,7 +98,7 @@ def main():
                                                    gamma=0.1)
 
     # let's train it for 10 epochs
-    num_epochs = 10
+    num_epochs = 1
 
     for epoch in range(num_epochs):
         # train for one epoch, printing every 10 iterations
@@ -106,6 +107,15 @@ def main():
         lr_scheduler.step()
         # evaluate on the test dataset
         evaluate(model, data_loader_test, device=device)
+
+    # image = Image.open('/ path / to / an / image.jpg')
+    image_tensor = CraterDataset.get_test_image()
+    # pass a list of (potentially different sized) tensors
+    # to the model, in 0-1 range. The model will take care of
+    # batching them together and normalizing
+    output = model([image_tensor])
+    print(output)
+    summary(model, (1, 28, 28))
 
     print("That's it!")
 
