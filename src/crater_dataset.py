@@ -21,7 +21,7 @@ from torchvision.transforms import functional as F
 # from torch.utils.data.dataloader import default_collate
 
 
-class CraterDataset(Dataset):
+class crater_dataset(Dataset):
     """Crater dataset."""
     def __init__(self, root_dir, annotations_file, transform=None):
         """

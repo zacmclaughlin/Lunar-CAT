@@ -1,21 +1,29 @@
+# importing torch utilities
 import torchvision
 import torch
 from torch import utils
 from torch.utils import data
 from torchvision import transforms
+
+# get models we care about
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
-import transforms as T
-from engine import train_one_epoch, evaluate
-# import utils
-import CraterDataset
-from visualize_data import ImageView
-from PIL import Image
+
+# import system hooks
 import sys
-from PyQt5.QtWidgets import QApplication
-import read_write_objects
 from os import listdir
 from os.path import isfile, join
+
+# image data imports
+from PIL import Image
+from PyQt5.QtWidgets import QApplication
+
+# local imports
+import transforms as T
+from engine import train_one_epoch, evaluate
+import crater_dataset
+from visualize_data import ImageView
+import read_write_objects
 
 
 # Pathways
@@ -57,8 +65,8 @@ def create_model_output(model, path_to_images, model_filename):
     images = [f for f in listdir(path_to_images) if isfile(join(path_to_images, f))]
     image_tensors = []
     for image in range(len(images)):
-        image_tensors.append(CraterDataset.get_test_image(root_dir=path_to_images,
-                                                          image_name=image))
+        image_tensors.append(crater_dataset.get_crater_image(root_dir=path_to_images,
+                                                             image_name=images[image]))
         # pass a list of (potentially different sized) tensors
         # to the model, in 0-1 range. The model will take care of
         # batching them together and normalizing
@@ -77,13 +85,13 @@ def train_and_evaluate(number_of_images):
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
     transform = transforms.Compose(
-        [CraterDataset.Rescale(401), CraterDataset.SquareCrop(400), CraterDataset.ToTensor()])
+        [crater_dataset.Rescale(401), crater_dataset.SquareCrop(400), crater_dataset.ToTensor()])
 
     # our dataset has two classes only - background and person
     num_classes = 2
     # use our dataset and defined transformations
-    dataset = CraterDataset.CraterDataset(DATA_PATH, ANNOTATIONS_PATH, transform)
-    dataset_test = CraterDataset.CraterDataset(DATA_PATH_TEST, ANNOTATIONS_PATH_TEST, transform)
+    dataset = crater_dataset.crater_dataset(DATA_PATH, ANNOTATIONS_PATH, transform)
+    dataset_test = crater_dataset.crater_dataset(DATA_PATH_TEST, ANNOTATIONS_PATH_TEST, transform)
 
     # split the dataset in train and test set
     indices = torch.randperm(len(dataset)).tolist()
@@ -94,11 +102,11 @@ def train_and_evaluate(number_of_images):
     # define training and validation data loaders
     data_loader = torch.utils.data.DataLoader(
         dataset, batch_size=2, shuffle=True, num_workers=0,
-        collate_fn=CraterDataset.collate_fn_crater_padding)
+        collate_fn=crater_dataset.collate_fn_crater_padding)
 
     data_loader_test = torch.utils.data.DataLoader(
         dataset_test, batch_size=1, shuffle=False, num_workers=0,
-        collate_fn=CraterDataset.collate_fn_crater_padding)
+        collate_fn=crater_dataset.collate_fn_crater_padding)
 
     # get the model using our helper function
     model = get_model_instance_segmentation(num_classes)

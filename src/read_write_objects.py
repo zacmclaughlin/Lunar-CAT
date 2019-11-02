@@ -23,10 +23,3 @@ def read_object_from_file(filename):
     obj = pickle.load(open(filename, 'rb'))
 
     return obj
-
-#
-# def load_output_from_file(path_to_model, model_name):
-#
-#     output_filename = path_to_model + model_name
-#     output = read_object_from_file(output_filename)
-#     return output

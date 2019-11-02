@@ -7,7 +7,7 @@ from bokeh.plotting import figure
 from bokeh.io import show
 from bokeh.models import LinearAxis, Range1d
 import numpy as np
-import CraterDataset
+import crater_dataset
 
 
 print("++++++++ Begin Access Tests ++++++++++")
@@ -25,17 +25,17 @@ ANNOTATIONS_PATH = '../data/Apollo_16_Rev_17/crater17_annotations.json'
 DATA_PATH_TEST = '../data/Apollo_16_Rev_17/'
 ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_17/crater17_annotations.json'
 
-transform = transforms.Compose([CraterDataset.Rescale(401), CraterDataset.SquareCrop(400), CraterDataset.ToTensor()])
+transform = transforms.Compose([crater_dataset.Rescale(401), crater_dataset.SquareCrop(400), crater_dataset.ToTensor()])
 
 # zacs evil dataset...
-train_dataset = CraterDataset.CraterDataset(DATA_PATH, ANNOTATIONS_PATH, transform)
-test_dataset = CraterDataset.CraterDataset(DATA_PATH_TEST, ANNOTATIONS_PATH_TEST, transform)
+train_dataset = crater_dataset.crater_dataset(DATA_PATH, ANNOTATIONS_PATH, transform)
+test_dataset = crater_dataset.crater_dataset(DATA_PATH_TEST, ANNOTATIONS_PATH_TEST, transform)
 
 # Data [redacted]
 train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size,
-                          shuffle=True, collate_fn=CraterDataset.collate_fn_crater_padding)
+                          shuffle=True, collate_fn=crater_dataset.collate_fn_crater_padding)
 test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size,
-                         shuffle=False, collate_fn=CraterDataset.collate_fn_crater_padding)
+                         shuffle=False, collate_fn=crater_dataset.collate_fn_crater_padding)
 
 for i in range(len(train_dataset)):
     sample = train_dataset[i]
