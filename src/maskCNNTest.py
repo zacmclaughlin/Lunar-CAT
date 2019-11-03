@@ -85,7 +85,7 @@ def get_transform(train):
     return T.Compose(transforms)
 
 
-def create_model_output(model, path_to_images, model_filename):
+def create_model_output(model, path_to_images, model_filename=SAVE_OUTPUT_FILE_AND_PATH):
     images = [f for f in listdir(path_to_images) if isfile(join(path_to_images, f))]
     image_tensors = []
     for image in range(int(len(images)/3)):
@@ -97,8 +97,7 @@ def create_model_output(model, path_to_images, model_filename):
 
     # get output dictionary
     output = model(image_tensors)
-    output_network_test = '../output/' + model_filename + '.p'
-    read_write_objects.save_obj_to_file(output_network_test, output)  # save to file
+    read_write_objects.save_obj_to_file(model_filename, output)  # save to file
 
     return output
 
@@ -251,7 +250,7 @@ def main(arguments):
         model = train_and_evaluate(model, data_loader, data_loader_test, num_epochs=10)
 
         # Save the model
-        create_model_output(model, '../output', 'output.p')
+        create_model_output(model, SAVE_OUTPUT_FILE_AND_PATH)
         torch.save(model.state_dict(), SAVE_MODEL_FILE_AND_PATH)
 
     else:
