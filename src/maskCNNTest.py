@@ -126,7 +126,7 @@ def get_crater_datasets(number_of_images):
     return dataset, data_loader, dataset_test, data_loader_test
 
 
-def train_and_evaluate(model, data_loader, data_loader_test):
+def train_and_evaluate(model, data_loader, data_loader_test, num_epochs):
     # train on the GPU or on the CPU, if a GPU is not available
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
@@ -143,7 +143,6 @@ def train_and_evaluate(model, data_loader, data_loader_test):
                                                    gamma=0.1)
 
     # let's train it for x epochs
-    num_epochs = 10
     for epoch in range(num_epochs):
         # train for one epoch, printing every 10 iterations
         train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10)
@@ -151,10 +150,12 @@ def train_and_evaluate(model, data_loader, data_loader_test):
         lr_scheduler.step()
         # evaluate on the test dataset
         evaluate(model, data_loader_test, device=device)
+        torch.save(model.state_dict(), SAVE_MODEL_FILE_AND_PATH)
 
     # confirm finish
     print("Finished training and evaluating")
 
+    # torch.save(model.state_dict(), output_model_filename)
     return model
 
 
@@ -211,7 +212,7 @@ def main(arguments):
 
     run_type = get_run_type(arguments, len(arguments) - 1)
 
-    dataset, data_loader, dataset_test, data_loader_test = get_crater_datasets(number_of_images=30)
+    dataset, data_loader, dataset_test, data_loader_test = get_crater_datasets(number_of_images=3)
 
     if run_type == "-load":
         # Load the model
@@ -219,7 +220,7 @@ def main(arguments):
         loaded_model = load_model_instance_segmentation(2, loaded_model)
 
         # Train the model
-        model = train_and_evaluate(loaded_model, data_loader, data_loader_test)
+        model = train_and_evaluate(loaded_model, data_loader, data_loader_test, num_epochs=10)
 
         # Save the model
         create_model_output(model, '../output', 'output.p')
@@ -241,7 +242,7 @@ def main(arguments):
         model = create_model_instance_segmentation(2)
 
         # Train the model
-        model = train_and_evaluate(model, data_loader, data_loader_test)
+        model = train_and_evaluate(model, data_loader, data_loader_test, num_epochs=10)
 
         # Save the model
         create_model_output(model, '../output', 'output.p')
