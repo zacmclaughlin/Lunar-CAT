@@ -31,12 +31,21 @@ import read_write_objects
 # Pathways
 DATA_PATH = '../data/Apollo_16_Rev_17/'
 ANNOTATIONS_PATH = '../data/Apollo_16_Rev_17/crater17_annotations.json'
-# DATA_PATH_TEST = '../data/Apollo_16_Rev_18/'
-# ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_18/crater18_annotations.json'
-DATA_PATH_TEST = '../data/Apollo_16_Rev_28/'
-ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_28/crater28_annotations.json'
-# DATA_PATH_TEST = '../data/single_img/'
-# ANNOTATIONS_PATH_TEST = '../data/single_img/annotations.json'
+
+DATA_PATH_TEST = '../data/Apollo_16_Rev_18/'
+ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_18/crater18_annotations.json'
+
+LOAD_MODEL_FILE_AND_PATH = "../output/nov3_overnight_run_60images_20epochs.p"
+LOAD_OUTPUT_FILE_AND_PATH = ""
+
+SAVE_MODEL_FILE_AND_PATH = "../output/nov3_daytime_run.p"
+SAVE_OUTPUT_FILE_AND_PATH = ""
+
+# Other dataset paths:
+# '../data/Apollo_16_Rev_28/'
+# '../data/Apollo_16_Rev_28/crater28_annotations.json'
+# '../data/Apollo_16_Rev_63/'
+# '../data/Apollo_16_Rev_63/crater63_annotations.json'
 
 
 def create_model_instance_segmentation(num_classes):
@@ -55,29 +64,12 @@ def create_model_instance_segmentation(num_classes):
     model.roi_heads.mask_predictor = MaskRCNNPredictor(in_features_mask,
                                                        hidden_layer,
                                                        num_classes)
-
     return model
 
 
 def load_model_instance_segmentation(num_classes, state_dict):
-    # load an instance segmentation model pre-trained pre-trained on COCO
-    loaded_model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=True)
-
-    # get number of input features for the classifier
-    in_features = loaded_model.roi_heads.box_predictor.cls_score.in_features
-    # replace the pre-trained head with a new one
-    loaded_model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
-
-    # now get the number of input features for the mask classifier
-    in_features_mask = loaded_model.roi_heads.mask_predictor.conv5_mask.in_channels
-    hidden_layer = 256
-    # and replace the mask predictor with a new one
-    loaded_model.roi_heads.mask_predictor = MaskRCNNPredictor(in_features_mask,
-                                                       hidden_layer,
-                                                       num_classes)
-
+    loaded_model = create_model_instance_segmentation(num_classes)
     loaded_model.load_state_dict(state_dict)
-
     return loaded_model
 
 
@@ -101,7 +93,6 @@ def create_model_output(model, path_to_images, model_filename):
 
     # get output dictionary
     output = model(image_tensors)
-
     output_network_test = '../output/' + model_filename + '.p'
     read_write_objects.save_obj_to_file(output_network_test, output)  # save to file
 
@@ -135,15 +126,9 @@ def get_crater_datasets(number_of_images):
     return dataset, data_loader, dataset_test, data_loader_test
 
 
-def train_and_evaluate(dataset, data_loader, dataset_test, data_loader_test):
+def train_and_evaluate(model, data_loader, data_loader_test):
     # train on the GPU or on the CPU, if a GPU is not available
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-
-    # our dataset has two classes only - background and person
-    num_classes = 2
-
-    # get the model using our helper function
-    model = create_model_instance_segmentation(num_classes)
 
     # move model to the right device
     model.to(device)
@@ -207,27 +192,63 @@ def get_display_widget(model, dataset):
     return ImageBook(image_set)  # return display widget
 
 
-def main():
+def get_run_type(arguments, number_of_arguments):
+    if number_of_arguments > 1:
+        position = 1
+        while number_of_arguments >= position:
+            print("parameter %i: %s" % (position, sys.argv[position]))
+            position = position + 1
+        print("At this time, only one command line argument at a time is supported. \n "
+              "Please choose from the following options: \n"
+              "-viz, -new, -load \n"
+              "-new will be assumed by default. ")
+        return "-new"
+    else:
+        return arguments[1]
 
-    dataset, data_loader, dataset_test, data_loader_test = get_crater_datasets(number_of_images=10)
-    #
-    # model = train_and_evaluate(dataset, data_loader, dataset_test, data_loader_test)
-    #
-    # create_model_output(model, '../data/Apollo_16_Rev_63/JPGImages/', 'output')
-    #
-    # torch.save(model.state_dict(), "../output/model.p")
 
-    loaded_model = torch.load("../output/sofiasmodelv1.p")
+def main(arguments):
 
-    loaded_model = load_model_instance_segmentation(2, loaded_model)
+    run_type = get_run_type(arguments, len(arguments) - 1)
 
-    app = QApplication(sys.argv)
+    print(run_type)
 
-    image_book = get_display_widget(model=loaded_model, dataset=dataset_test)
-    image_book.show()
+    dataset, data_loader, dataset_test, data_loader_test = get_crater_datasets(number_of_images=30)
 
-    sys.exit(app.exec_())
+    if run_type == "-load":
+        # Load the model
+        loaded_model = torch.load(LOAD_MODEL_FILE_AND_PATH)
+        loaded_model = load_model_instance_segmentation(2, loaded_model)
+
+        # Train the model
+        model = train_and_evaluate(loaded_model, data_loader, data_loader_test)
+
+        # Save the model
+        create_model_output(model, '../output', 'output.p')
+        torch.save(model.state_dict(), SAVE_MODEL_FILE_AND_PATH)
+
+    elif run_type == "-viz":
+        # Load the model
+        loaded_model = torch.load(LOAD_MODEL_FILE_AND_PATH)
+        loaded_model = load_model_instance_segmentation(2, loaded_model)
+
+        # Visualize the model
+        app = QApplication(sys.argv)
+        image_book = get_display_widget(model=loaded_model, dataset=dataset_test)
+        image_book.show()
+        sys.exit(app.exec_())
+
+    elif run_type == "-new":
+        # Create a new model using our helper function. Our dataset has two classes only - background and crater
+        model = create_model_instance_segmentation(2)
+
+        # Train the model
+        model = train_and_evaluate(model, data_loader, data_loader_test)
+
+        # Save the model
+        create_model_output(model, '../output', 'output.p')
+        torch.save(model.state_dict(),SAVE_MODEL_FILE_AND_PATH)
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)
