@@ -217,7 +217,7 @@ def main():
     #
     # torch.save(model.state_dict(), "../output/model.p")
 
-    loaded_model = torch.load("../output/model.p")
+    loaded_model = torch.load("../output/sofiasmodelv1.p")
 
     loaded_model = load_model_instance_segmentation(2, loaded_model)
 
