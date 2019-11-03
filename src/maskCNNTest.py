@@ -208,6 +208,8 @@ def get_run_type(arguments, number_of_arguments):
               "-viz, -new, -load \n"
               "-new will be assumed by default. ")
         return "-new"
+    elif number_of_arguments == 0:
+        return "-new"
     else:
         return arguments[1]
 
