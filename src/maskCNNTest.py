@@ -228,7 +228,7 @@ def main(arguments):
         model = train_and_evaluate(loaded_model, data_loader, data_loader_test, num_epochs=10)
 
         # Save the model
-        create_model_output(model, '../output', 'output.p')
+        create_model_output(model, SAVE_OUTPUT_FILE_AND_PATH)
         torch.save(model.state_dict(), SAVE_MODEL_FILE_AND_PATH)
 
     elif run_type == "-viz":
