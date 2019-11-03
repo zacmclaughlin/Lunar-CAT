@@ -24,7 +24,7 @@ import cv2
 import transforms as T
 from engine import train_one_epoch, evaluate
 import crater_dataset
-from visualize_data import ImageView
+from visualize_data import ImageView, ImageBook
 import read_write_objects
 
 
@@ -167,48 +167,48 @@ def train_and_evaluate(dataset, data_loader, dataset_test, data_loader_test):
     # confirm finish
     print("Finished training and evaluating")
 
-    return model, dataset, dataset_test
+    return model
 
 
-def display_data(model, dataset):
-    # train on the GPU or on the CPU, if a GPU is not available
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    # pick one image from the test set
-    img, _ = dataset[0]
-    # put the model in evaluation mode
-    model.eval()
-    with torch.no_grad():
-        prediction = model([img.to(device)])
+def get_display_widget(model, dataset):
+    image_set = {}
+    for datum in range(len(dataset)):
+        # train on the GPU or on the CPU, if a GPU is not available
+        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        # pick one image from the test set
+        img, _ = dataset[datum]
+        # put the model in evaluation mode
+        model.eval()
+        with torch.no_grad():
+            prediction = model([img.to(device)])
 
-    a_crater = img.mul(255).permute(1, 2, 0).byte().numpy()
-    a_guess_mask = Image.fromarray(prediction[0]['masks'][0, 0].mul(255).byte().cpu().numpy())
-    bounding_boxes = np.asarray(prediction[0]['boxes'])
+        this_crater = img.mul(255).permute(1, 2, 0).byte().numpy()
+        this_guess_mask = Image.fromarray(prediction[0]['masks'][0, 0].mul(255).byte().cpu().numpy())
+        bounding_boxes = np.asarray(prediction[0]['boxes'])
 
-    for i in range(len(bounding_boxes)):
-        a_crater = cv2.rectangle(a_crater,
-                      (bounding_boxes[i][0], bounding_boxes[i][1]),
-                      (bounding_boxes[i][2], bounding_boxes[i][3]),
-                      (0, 255, 0), 1)
+        for box in range(len(bounding_boxes)):
+            this_crater = cv2.rectangle(this_crater,
+                          (bounding_boxes[box][0], bounding_boxes[box][1]),
+                          (bounding_boxes[box][2], bounding_boxes[box][3]),
+                          (0, 255, 0), 1)
 
-    a_crater = Image.fromarray(a_crater)
+        this_crater = Image.fromarray(this_crater)
 
-    # show data
-    imageshow = ImageView()
-    imageshow.show_image([a_crater, a_guess_mask])
-    imageshow.show()
+        image_show = ImageView()
+        image_show.set_image([this_crater, this_guess_mask])
+
+        image_set[str(datum)] = image_show
+
+    return ImageBook(image_set)  # return display widget
 
 
 def main():
 
-    app = QApplication(sys.argv)
-
     dataset, data_loader, dataset_test, data_loader_test = get_crater_datasets(number_of_images=20)
 
-    model, training_data, evaluation_data = train_and_evaluate(dataset, data_loader, dataset_test, data_loader_test)
+    model = train_and_evaluate(dataset, data_loader, dataset_test, data_loader_test)
 
-    create_model_output(model, '../data/Apollo_16_Rev_63/JPGImages/', 'bad_output')
-
-    display_data(model=model, dataset=evaluation_data)
+    create_model_output(model, '../data/Apollo_16_Rev_63/JPGImages/', 'output')
 
     torch.save(model.state_dict(), "../output/model.p")
 
@@ -217,6 +217,11 @@ def main():
     loaded_model = load_model_instance_segmentation(2, loaded_model)
 
     loaded_model.eval()
+
+    app = QApplication(sys.argv)
+
+    image_book = get_display_widget(model=loaded_model, dataset=dataset_test)
+    image_book.show()
 
     sys.exit(app.exec_())
 

@@ -1,10 +1,48 @@
 import matplotlib.pyplot as plt
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QWidget, QVBoxLayout
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QFrame, QComboBox
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 # plt.style.use("ggplot") # ggplot seaborn
 from matplotlib.figure import Figure
+import numpy as np
+
+
+class ImageBook(QWidget):
+
+    def __init__(self, image_set):
+        super().__init__()
+        self.title = 'Network Results Flipbook'
+        self.results = image_set
+
+        self.left = 0
+        self.top = 0
+        self.width = 600
+        self.height = 400
+        self.setWindowTitle(self.title)
+        self.setGeometry(self.left, self.top, self.width, self.height)
+
+        self.layout = QVBoxLayout(self)
+        self.displayWidget = QFrame(self)
+        self.canvasLayout = QVBoxLayout(self)
+        self.displayWidget.setLayout(self.canvasLayout)
+
+        self.chooseWidget = QComboBox(self)
+        self.chooseWidget.activated.connect(self.result_choice)
+        self.chooseWidget.addItems(self.results.keys())
+
+        self.layout.addWidget(self.displayWidget)
+        self.layout.addWidget(self.chooseWidget)
+
+        self.show()
+
+    def result_choice(self, text):
+        print(type(self.results[str(text)]))
+        # self.canvasLayout.removeWidget(self.widget_name)
+        for i in reversed(range(self.canvasLayout.count())):
+            self.canvasLayout.itemAt(i).widget().setParent(None)
+        self.canvasLayout.addWidget(self.results[str(text)])
+        self.show()
 
 
 class ImageView(QWidget):
@@ -37,7 +75,7 @@ class ImageView(QWidget):
         self.font.setPointSize(1)
         self.canvas.show()
 
-    def show_image(self, images):
+    def set_image(self, images):
         if (len(images) % 2) is not 0:
             images = images[:-1]
         for i in range(len(images)):
