@@ -86,6 +86,10 @@ class crater_dataset(Dataset):
         mask = cv2.cvtColor(segmented_image, cv2.COLOR_BGR2GRAY)
 
         segmented_image = Image.fromarray(segmented_image)
+
+        if not os.path.isdir(self.root_dir + "CraterMasks/"):
+            os.mkdir(self.root_dir + "CraterMasks/")
+
         segmented_image.save(self.root_dir + "CraterMasks/" +
                              self.landmarks_frame[idx_keys]['filename'].split(".")[0] +
                              "_mask.jpg")

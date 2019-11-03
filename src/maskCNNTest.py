@@ -31,8 +31,10 @@ import read_write_objects
 # Pathways
 DATA_PATH = '../data/Apollo_16_Rev_17/'
 ANNOTATIONS_PATH = '../data/Apollo_16_Rev_17/crater17_annotations.json'
-DATA_PATH_TEST = '../data/Apollo_16_Rev_28/'
-ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_28/crater28_annotations.json'
+DATA_PATH_TEST = '../data/Apollo_16_Rev_18/'
+ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_18/crater18_annotations.json'
+# DATA_PATH_TEST = '../data/single_img/'
+# ANNOTATIONS_PATH_TEST = '../data/single_img/annotations.json'
 
 
 def create_model_instance_segmentation(num_classes):
@@ -155,14 +157,14 @@ def train_and_evaluate(dataset, data_loader, dataset_test, data_loader_test):
 
     # let's train it for x epochs
     num_epochs = 10
-
-    for epoch in range(num_epochs):
-        # train for one epoch, printing every 10 iterations
-        train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10)
-        # update the learning rate
-        lr_scheduler.step()
-        # evaluate on the test dataset
-        evaluate(model, data_loader_test, device=device)
+    if train:
+        for epoch in range(num_epochs):
+            # train for one epoch, printing every 10 iterations
+            train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10)
+            # update the learning rate
+            lr_scheduler.step()
+            # evaluate on the test dataset
+            evaluate(model, data_loader_test, device=device)
 
     # confirm finish
     print("Finished training and evaluating")
@@ -183,21 +185,24 @@ def get_display_widget(model, dataset):
             prediction = model([img.to(device)])
 
         this_crater = img.mul(255).permute(1, 2, 0).byte().numpy()
-        this_guess_mask = Image.fromarray(prediction[0]['masks'][0, 0].mul(255).byte().cpu().numpy())
+        guess_mask = np.zeros((prediction[0]['masks'].shape[2], prediction[0]['masks'].shape[3]))
         bounding_boxes = np.asarray(prediction[0]['boxes'])
-
-        for box in range(len(bounding_boxes)):
-            this_crater = cv2.rectangle(this_crater,
-                          (bounding_boxes[box][0], bounding_boxes[box][1]),
-                          (bounding_boxes[box][2], bounding_boxes[box][3]),
-                          (0, 255, 0), 1)
-
+        for j in range(int(prediction[0]['masks'].shape[0]/10)):
+            print(float(prediction[0]['scores'][j]))
+            mask = prediction[0]['masks'][j, 0].mul(255).byte().cpu().numpy()
+            guess_mask = guess_mask + mask        
+            a_crater = cv2.rectangle(a_crater,
+                         (bounding_boxes[j][0], bounding_boxes[j][1]),
+                         (bounding_boxes[j][2], bounding_boxes[j][3]),
+                         (0, 255, 0), 1)
+        this_guess_mask = Image.fromarray(guess_mask)
+        
         this_crater = Image.fromarray(this_crater)
 
-        image_show = ImageView()
-        image_show.set_image([this_crater, this_guess_mask])
+        image_canvas = ImageView()
+        image_canvas.set_image([this_crater, this_guess_mask])
 
-        image_set[str(datum)] = image_show
+        image_set[str(datum)] = image_canvas
 
     return ImageBook(image_set)  # return display widget
 
@@ -215,8 +220,6 @@ def main():
     loaded_model = torch.load("../output/model.p")
 
     loaded_model = load_model_instance_segmentation(2, loaded_model)
-
-    loaded_model.eval()
 
     app = QApplication(sys.argv)
 
