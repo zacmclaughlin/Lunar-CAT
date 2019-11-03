@@ -104,15 +104,11 @@ def create_model_output(model, path_to_images, model_filename):
     return output
 
 
-def train_and_evaluate(number_of_images):
-    # train on the GPU or on the CPU, if a GPU is not available
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+def get_crater_datasets(number_of_images):
 
     transform = transforms.Compose(
         [crater_dataset.Rescale(401), crater_dataset.SquareCrop(400), crater_dataset.ToTensor()])
 
-    # our dataset has two classes only - background and person
-    num_classes = 2
     # use our dataset and defined transformations
     dataset = crater_dataset.crater_dataset(DATA_PATH, ANNOTATIONS_PATH, transform)
     dataset_test = crater_dataset.crater_dataset(DATA_PATH_TEST, ANNOTATIONS_PATH_TEST, transform)
@@ -131,6 +127,16 @@ def train_and_evaluate(number_of_images):
     data_loader_test = torch.utils.data.DataLoader(
         dataset_test, batch_size=1, shuffle=False, num_workers=0,
         collate_fn=crater_dataset.collate_fn_crater_padding)
+
+    return dataset, data_loader, dataset_test, data_loader_test
+
+
+def train_and_evaluate(dataset, data_loader, dataset_test, data_loader_test):
+    # train on the GPU or on the CPU, if a GPU is not available
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+    # our dataset has two classes only - background and person
+    num_classes = 2
 
     # get the model using our helper function
     model = create_model_instance_segmentation(num_classes)
@@ -178,8 +184,7 @@ def display_data(model, dataset):
     a_guess_mask = Image.fromarray(prediction[0]['masks'][0, 0].mul(255).byte().cpu().numpy())
     bounding_boxes = np.asarray(prediction[0]['boxes'])
 
-    for i in range(len(bounding_boxes)):  # range(len([0])):
-        # print(np.asarray(prediction[0]['boxes'][i]))
+    for i in range(len(bounding_boxes)):
         a_crater = cv2.rectangle(a_crater,
                       (bounding_boxes[i][0], bounding_boxes[i][1]),
                       (bounding_boxes[i][2], bounding_boxes[i][3]),
@@ -194,9 +199,12 @@ def display_data(model, dataset):
 
 
 def main():
+
     app = QApplication(sys.argv)
 
-    model, training_data, evaluation_data = train_and_evaluate(number_of_images=20)
+    dataset, data_loader, dataset_test, data_loader_test = get_crater_datasets(number_of_images=20)
+
+    model, training_data, evaluation_data = train_and_evaluate(dataset, data_loader, dataset_test, data_loader_test)
 
     create_model_output(model, '../data/Apollo_16_Rev_63/JPGImages/', 'bad_output')
 
