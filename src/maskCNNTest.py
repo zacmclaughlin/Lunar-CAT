@@ -21,6 +21,26 @@ from PyQt5.QtWidgets import QApplication
 import numpy as np
 import cv2
 
+# data augmentation imports
+from albumentations import (
+    PadIfNeeded,
+    HorizontalFlip,
+    VerticalFlip,
+    CenterCrop,
+    Crop,
+    Compose,
+    Transpose,
+    RandomRotate90,
+    ElasticTransform,
+    GridDistortion,
+    OpticalDistortion,
+    RandomSizedCrop,
+    OneOf,
+    CLAHE,
+    RandomBrightnessContrast,
+    RandomGamma
+)
+
 # local imports
 import transforms as T
 from engine import train_one_epoch, evaluate
@@ -111,9 +131,24 @@ def get_crater_datasets(number_of_images):
     transform = transforms.Compose(
         [crater_dataset.Rescale(401), crater_dataset.SquareCrop(400), crater_dataset.ToTensor()])
 
+    aug = PadIfNeeded(p=1, min_height=400, min_width=400)
+    aug = Compose([PadIfNeeded(p=1, min_height=400, min_width=400),
+                   VerticalFlip(p=0.5),
+                   RandomRotate90(p=0.5),
+                   OneOf([
+                       ElasticTransform(p=0.5, alpha=120, sigma=120 * 0.05, alpha_affine=120 * 0.03),
+                       GridDistortion(p=0.5),
+                       OpticalDistortion(p=1, distort_limit=2, shift_limit=0.5)
+                   ],
+                   p=0.8)  #,
+                   # CLAHE(p=0.8),
+                   # RandomBrightnessContrast(p=0.8),
+                   # RandomGamma(p=0.8)
+                   ])
+
     # use our dataset and defined transformations
-    dataset = crater_dataset.crater_dataset(DATA_PATH, ANNOTATIONS_PATH, transform, augmentation=None)
-    dataset_test = crater_dataset.crater_dataset(DATA_PATH_TEST, ANNOTATIONS_PATH_TEST, transform, augmentation=None)
+    dataset = crater_dataset.crater_dataset(DATA_PATH, ANNOTATIONS_PATH, transform, augmentation=aug)
+    dataset_test = crater_dataset.crater_dataset(DATA_PATH_TEST, ANNOTATIONS_PATH_TEST, transform, augmentation=aug)
 
     # split the dataset in train and test set
     indices = torch.randperm(len(dataset)).tolist()
@@ -219,7 +254,7 @@ def main(arguments):
 
     run_type = get_run_type(arguments, len(arguments) - 1)
 
-    dataset, data_loader, dataset_test, data_loader_test = get_crater_datasets(number_of_images=20)
+    dataset, data_loader, dataset_test, data_loader_test = get_crater_datasets(number_of_images=2)
 
     if run_type == "-load":
         # Load the model
@@ -227,7 +262,7 @@ def main(arguments):
         loaded_model = load_model_instance_segmentation(2, loaded_model)
 
         # Train the model
-        model = train_and_evaluate(loaded_model, data_loader, data_loader_test, num_epochs=10)
+        model = train_and_evaluate(loaded_model, data_loader, data_loader_test, num_epochs=1)
 
         # Save the model
         torch.save(model.state_dict(), SAVE_MODEL_FILE_AND_PATH)
