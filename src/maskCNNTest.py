@@ -247,6 +247,7 @@ def main(arguments):
         # Save the model
         create_model_output(model, '../output', 'output.p')
         torch.save(model.state_dict(), SAVE_MODEL_FILE_AND_PATH)
+
     else:
         print("Please choose from the following options: \n"
               "-viz, -new, -load \n"
