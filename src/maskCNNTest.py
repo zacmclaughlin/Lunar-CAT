@@ -13,6 +13,7 @@ from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 import sys
 from os import listdir
 from os.path import isfile, join
+import datetime
 
 # image data imports
 from PIL import Image
@@ -38,7 +39,10 @@ ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_18/crater18_annotations.json'
 LOAD_MODEL_FILE_AND_PATH = "../output/nov3_overnight_run_60images_20epochs.p"
 LOAD_OUTPUT_FILE_AND_PATH = ""
 
-SAVE_MODEL_FILE_AND_PATH = "../output/nov3_daytime_run.p"
+currentDT = datetime.datetime.now()
+currentDT = str(currentDT).replace(":", "-").replace(" ", "--").split(".")[0]
+
+SAVE_MODEL_FILE_AND_PATH = "../output/model_at_time_" + currentDT + ".p"
 SAVE_OUTPUT_FILE_AND_PATH = ""
 
 # Other dataset paths:
