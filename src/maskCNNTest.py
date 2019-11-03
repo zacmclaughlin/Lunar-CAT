@@ -182,6 +182,9 @@ def main():
 
     torch.save(model.state_dict(), "../output/model.p")
 
+    loaded_model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=True)
+    loaded_model.load_state_dict(torch.load("../output/model.p"), strict=False)
+
     sys.exit(app.exec_())
 
     # Model class must be defined somewhere
