@@ -24,7 +24,7 @@ class ImageBook(QWidget):
 
         self.layout = QVBoxLayout(self)
         self.displayWidget = QFrame(self)
-        self.canvasLayout = QVBoxLayout(self)
+        self.canvasLayout = QVBoxLayout()
         self.displayWidget.setLayout(self.canvasLayout)
 
         self.chooseWidget = QComboBox(self)
@@ -37,8 +37,6 @@ class ImageBook(QWidget):
         self.show()
 
     def result_choice(self, text):
-        print(type(self.results[str(text)]))
-        # self.canvasLayout.removeWidget(self.widget_name)
         for i in reversed(range(self.canvasLayout.count())):
             self.canvasLayout.itemAt(i).widget().setParent(None)
         self.canvasLayout.addWidget(self.results[str(text)])

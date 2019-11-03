@@ -31,10 +31,10 @@ import read_write_objects
 # Pathways
 DATA_PATH = '../data/Apollo_16_Rev_17/'
 ANNOTATIONS_PATH = '../data/Apollo_16_Rev_17/crater17_annotations.json'
-DATA_PATH_TEST = '../data/Apollo_16_Rev_18/'
-ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_18/crater18_annotations.json'
-# DATA_PATH_TEST = '../data/Apollo_16_Rev_28/'
-# ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_28/crater28_annotations.json'
+# DATA_PATH_TEST = '../data/Apollo_16_Rev_18/'
+# ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_18/crater18_annotations.json'
+DATA_PATH_TEST = '../data/Apollo_16_Rev_28/'
+ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_28/crater28_annotations.json'
 # DATA_PATH_TEST = '../data/single_img/'
 # ANNOTATIONS_PATH_TEST = '../data/single_img/annotations.json'
 
@@ -189,10 +189,9 @@ def get_display_widget(model, dataset):
         guess_mask = np.zeros((prediction[0]['masks'].shape[2], prediction[0]['masks'].shape[3]))
         bounding_boxes = np.asarray(prediction[0]['boxes'])
         for j in range(int(prediction[0]['masks'].shape[0]/10)):
-            print(float(prediction[0]['scores'][j]))
             mask = prediction[0]['masks'][j, 0].mul(255).byte().cpu().numpy()
             guess_mask = guess_mask + mask        
-            a_crater = cv2.rectangle(a_crater,
+            this_crater = cv2.rectangle(this_crater,
                          (bounding_boxes[j][0], bounding_boxes[j][1]),
                          (bounding_boxes[j][2], bounding_boxes[j][3]),
                          (0, 255, 0), 1)
@@ -210,13 +209,13 @@ def get_display_widget(model, dataset):
 
 def main():
 
-    dataset, data_loader, dataset_test, data_loader_test = get_crater_datasets(number_of_images=20)
-
-    model = train_and_evaluate(dataset, data_loader, dataset_test, data_loader_test)
-
-    create_model_output(model, '../data/Apollo_16_Rev_63/JPGImages/', 'output')
-
-    torch.save(model.state_dict(), "../output/model.p")
+    dataset, data_loader, dataset_test, data_loader_test = get_crater_datasets(number_of_images=10)
+    #
+    # model = train_and_evaluate(dataset, data_loader, dataset_test, data_loader_test)
+    #
+    # create_model_output(model, '../data/Apollo_16_Rev_63/JPGImages/', 'output')
+    #
+    # torch.save(model.state_dict(), "../output/model.p")
 
     loaded_model = torch.load("../output/model.p")
 
