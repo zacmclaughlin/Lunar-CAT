@@ -180,7 +180,7 @@ def main():
 
     display_data(model=model, dataset=evaluation_data)
 
-    torch.save(model.state_dict(), "../output/output.p")
+    torch.save(model.state_dict(), "../output/model.p")
 
     sys.exit(app.exec_())
 
