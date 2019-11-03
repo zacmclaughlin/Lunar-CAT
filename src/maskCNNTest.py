@@ -66,7 +66,7 @@ def get_transform(train):
 def create_model_output(model, path_to_images, model_filename):
     images = [f for f in listdir(path_to_images) if isfile(join(path_to_images, f))]
     image_tensors = []
-    for image in range(len(images)):
+    for image in range(int(len(images)/3)):
         image_tensors.append(crater_dataset.get_crater_image(root_dir=path_to_images,
                                                              image_name=images[image]))
         # pass a list of (potentially different sized) tensors
@@ -126,7 +126,7 @@ def train_and_evaluate(number_of_images):
                                                    gamma=0.1)
 
     # let's train it for x epochs
-    num_epochs = 1
+    num_epochs = 10
 
     for epoch in range(num_epochs):
         # train for one epoch, printing every 10 iterations
@@ -154,35 +154,39 @@ def display_data(model, dataset):
 
     a_crater = img.mul(255).permute(1, 2, 0).byte().numpy()
     a_guess_mask = Image.fromarray(prediction[0]['masks'][0, 0].mul(255).byte().cpu().numpy())
-
     bounding_boxes = np.asarray(prediction[0]['boxes'])
-    for i in range(len(bounding_boxes)):
+
+    for i in range(len(bounding_boxes)):  # range(len([0])):
+        # print(np.asarray(prediction[0]['boxes'][i]))
         a_crater = cv2.rectangle(a_crater,
                       (bounding_boxes[i][0], bounding_boxes[i][1]),
-                      (bounding_boxes[i][0], bounding_boxes[i][1]),
+                      (bounding_boxes[i][2], bounding_boxes[i][3]),
                       (0, 255, 0), 1)
 
-    # print(a_craters_boxes)
     a_crater = Image.fromarray(a_crater)
 
     # show data
-    app = QApplication(sys.argv)
-
     imageshow = ImageView()
     imageshow.show_image([a_crater, a_guess_mask])
     imageshow.show()
 
-    sys.exit(app.exec_())
-
 
 def main():
-    model, training_data, evaluation_data = train_and_evaluate(number_of_images=2)
+    app = QApplication(sys.argv)
+
+    model, training_data, evaluation_data = train_and_evaluate(number_of_images=20)
 
     # create_model_output(model, '../data/Apollo_16_Rev_63/JPGImages/', 'bad_output')
 
     display_data(model=model, dataset=evaluation_data)
 
-    return
+    torch.save(model.state_dict(), "../output/output.p")
+
+    sys.exit(app.exec_())
+
+    # Model class must be defined somewhere
+    # model = torch.load("../output/")
+    # model.eval()
 
 
 if __name__ == "__main__":
