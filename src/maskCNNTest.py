@@ -43,7 +43,7 @@ currentDT = datetime.datetime.now()
 currentDT = str(currentDT).replace(":", "-").replace(" ", "--").split(".")[0]
 
 SAVE_MODEL_FILE_AND_PATH = "../output/model_at_time_" + currentDT + ".p"
-SAVE_OUTPUT_FILE_AND_PATH = ""
+SAVE_OUTPUT_FILE_AND_PATH = "../output/output_at_time_" + currentDT + ".p"
 
 # Other dataset paths:
 # '../data/Apollo_16_Rev_28/'
