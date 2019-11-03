@@ -31,8 +31,10 @@ import read_write_objects
 # Pathways
 DATA_PATH = '../data/Apollo_16_Rev_17/'
 ANNOTATIONS_PATH = '../data/Apollo_16_Rev_17/crater17_annotations.json'
-DATA_PATH_TEST = '../data/Apollo_16_Rev_28/'
-ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_28/crater28_annotations.json'
+DATA_PATH_TEST = '../data/Apollo_16_Rev_18/'
+ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_18/crater18_annotations.json'
+# DATA_PATH_TEST = '../data/single_img/'
+# ANNOTATIONS_PATH_TEST = '../data/single_img/annotations.json'
 
 
 def create_model_instance_segmentation(num_classes):
@@ -104,7 +106,7 @@ def create_model_output(model, path_to_images, model_filename):
     return output
 
 
-def train_and_evaluate(number_of_images):
+def train_and_evaluate(number_of_images, train):
     # train on the GPU or on the CPU, if a GPU is not available
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
@@ -149,14 +151,14 @@ def train_and_evaluate(number_of_images):
 
     # let's train it for x epochs
     num_epochs = 10
-
-    for epoch in range(num_epochs):
-        # train for one epoch, printing every 10 iterations
-        train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10)
-        # update the learning rate
-        lr_scheduler.step()
-        # evaluate on the test dataset
-        evaluate(model, data_loader_test, device=device)
+    if train:
+        for epoch in range(num_epochs):
+            # train for one epoch, printing every 10 iterations
+            train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10)
+            # update the learning rate
+            lr_scheduler.step()
+            # evaluate on the test dataset
+            evaluate(model, data_loader_test, device=device)
 
     # confirm finish
     print("Finished training and evaluating")
@@ -174,16 +176,32 @@ def display_data(model, dataset):
     with torch.no_grad():
         prediction = model([img.to(device)])
 
-    a_crater = img.mul(255).permute(1, 2, 0).byte().numpy()
-    a_guess_mask = Image.fromarray(prediction[0]['masks'][0, 0].mul(255).byte().cpu().numpy())
-    bounding_boxes = np.asarray(prediction[0]['boxes'])
 
-    for i in range(len(bounding_boxes)):  # range(len([0])):
-        # print(np.asarray(prediction[0]['boxes'][i]))
+    bounding_boxes = np.asarray(prediction[0]['boxes'])
+    a_crater = img.mul(255).permute(1, 2, 0).byte().numpy()
+    #a_guess_mask = Image.fromarray(prediction[0]['masks'][0, 0].mul(255).byte().cpu().numpy())
+    guess_mask = np.zeros((prediction[0]['masks'].shape[2], prediction[0]['masks'].shape[3]))
+    for j in range(int(prediction[0]['masks'].shape[0]/10)):
+        print(float(prediction[0]['scores'][j]))
+        #if float(prediction[0]['scores'][j]) > 0.3:
+        mask = prediction[0]['masks'][j, 0].mul(255).byte().cpu().numpy()
+        guess_mask = guess_mask + mask
+
         a_crater = cv2.rectangle(a_crater,
-                      (bounding_boxes[i][0], bounding_boxes[i][1]),
-                      (bounding_boxes[i][2], bounding_boxes[i][3]),
-                      (0, 255, 0), 1)
+                                 (bounding_boxes[j][0], bounding_boxes[j][1]),
+                                 (bounding_boxes[j][2], bounding_boxes[j][3]),
+                                 (0, 255, 0), 1)
+    a_guess_mask = Image.fromarray(guess_mask)
+
+    # bounding_boxes = np.asarray(prediction[0]['boxes'])
+    #
+    # for i in range(int(len(bounding_boxes)/8)):  # range(len([0])):
+    #     # print(np.asarray(prediction[0]['boxes'][i]))
+    #     #if float(prediction[0]['scores'][i]) > 0.3:
+    #     a_crater = cv2.rectangle(a_crater,
+    #                   (bounding_boxes[i][0], bounding_boxes[i][1]),
+    #                   (bounding_boxes[i][2], bounding_boxes[i][3]),
+    #                   (0, 255, 0), 1)
 
     a_crater = Image.fromarray(a_crater)
 
@@ -196,19 +214,18 @@ def display_data(model, dataset):
 def main():
     app = QApplication(sys.argv)
 
-    model, training_data, evaluation_data = train_and_evaluate(number_of_images=20)
+    model, training_data, evaluation_data = train_and_evaluate(number_of_images=20, train=True)
 
-    create_model_output(model, '../data/Apollo_16_Rev_63/JPGImages/', 'bad_output')
+    create_model_output(model, '../data/Apollo_16_Rev_63/JPGImages/', '17train_18test')
 
     display_data(model=model, dataset=evaluation_data)
 
-    torch.save(model.state_dict(), "../output/model.p")
+    torch.save(model.state_dict(), "../output/model_17train_18test.p")
 
-    loaded_model = torch.load("../output/output.p")
-
-    loaded_model = load_model_instance_segmentation(2, loaded_model)
-
-    loaded_model.eval()
+    # loaded_model = torch.load("../output/model.p")
+    # loaded_model = load_model_instance_segmentation(2, loaded_model)
+    # loaded_model.eval()
+    # display_data(model=loaded_model, dataset=evaluation_data)
 
     sys.exit(app.exec_())
 
