@@ -135,12 +135,12 @@ def get_crater_datasets(number_of_images):
     aug = Compose([PadIfNeeded(p=1, min_height=400, min_width=400),
                    VerticalFlip(p=0.5),
                    RandomRotate90(p=0.5),
-                   OneOf([
-                       ElasticTransform(p=0.5, alpha=120, sigma=120 * 0.05, alpha_affine=120 * 0.03),
-                       GridDistortion(p=0.5),
-                       OpticalDistortion(p=1, distort_limit=2, shift_limit=0.5)
-                   ],
-                   p=0.8)  #,
+                   # OneOf([
+                   #     ElasticTransform(p=0.5, alpha=120, sigma=120 * 0.05, alpha_affine=120 * 0.03),
+                   #     GridDistortion(p=0.5),
+                   #     OpticalDistortion(p=1, distort_limit=2, shift_limit=0.5)
+                   # ],
+                   # p=0.8),
                    # CLAHE(p=0.8),
                    # RandomBrightnessContrast(p=0.8),
                    # RandomGamma(p=0.8)
