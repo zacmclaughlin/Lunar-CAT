@@ -135,7 +135,7 @@ def get_crater_datasets(number_of_images):
     return dataset, data_loader, dataset_test, data_loader_test
 
 
-def train_and_evaluate(dataset, data_loader, dataset_test, data_loader_test):
+def train_and_evaluate(dataset, data_loader, dataset_test, data_loader_test,output_model_filename,number_epochs):
     # train on the GPU or on the CPU, if a GPU is not available
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
@@ -158,7 +158,7 @@ def train_and_evaluate(dataset, data_loader, dataset_test, data_loader_test):
                                                    gamma=0.1)
 
     # let's train it for x epochs
-    num_epochs = 10
+    num_epochs = number_epochs
     for epoch in range(num_epochs):
         # train for one epoch, printing every 10 iterations
         train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10)
@@ -166,10 +166,12 @@ def train_and_evaluate(dataset, data_loader, dataset_test, data_loader_test):
         lr_scheduler.step()
         # evaluate on the test dataset
         evaluate(model, data_loader_test, device=device)
+        torch.save(model.state_dict(), output_model_filename)
 
     # confirm finish
     print("Finished training and evaluating")
 
+    # torch.save(model.state_dict(), output_model_filename)
     return model
 
 
@@ -209,15 +211,16 @@ def get_display_widget(model, dataset):
 
 def main():
 
-    dataset, data_loader, dataset_test, data_loader_test = get_crater_datasets(number_of_images=10)
-    #
-    # model = train_and_evaluate(dataset, data_loader, dataset_test, data_loader_test)
+    dataset, data_loader, dataset_test, data_loader_test = get_crater_datasets(number_of_images=60)
+    output_model_filename = "../output/longrun.p"
+    # number_epochs = 20
+    # model = train_and_evaluate(dataset, data_loader, dataset_test, data_loader_test,output_model_filename,number_epochs)
     #
     # create_model_output(model, '../data/Apollo_16_Rev_63/JPGImages/', 'output')
     #
-    # torch.save(model.state_dict(), "../output/model.p")
+    # torch.save(model.state_dict(), output_model_filename)
 
-    loaded_model = torch.load("../output/sofiasmodelv1.p")
+    loaded_model = torch.load(output_model_filename)
 
     loaded_model = load_model_instance_segmentation(2, loaded_model)
 
