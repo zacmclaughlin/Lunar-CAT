@@ -198,16 +198,16 @@ def main():
 
     model, training_data, evaluation_data = train_and_evaluate(number_of_images=20)
 
-    # create_model_output(model, '../data/Apollo_16_Rev_63/JPGImages/', 'bad_output')
+    create_model_output(model, '../data/Apollo_16_Rev_63/JPGImages/', 'bad_output')
 
     display_data(model=model, dataset=evaluation_data)
 
     torch.save(model.state_dict(), "../output/model.p")
 
-    loaded_model = torchvision.models.detection.maskrcnn_resnet50_fpn(pretrained=True)
-    loaded_model.load_state_dict(torch.load("../output/model.p"), strict=False)
+    loaded_model = torch.load("../output/output.p")
 
     loaded_model = load_model_instance_segmentation(2, loaded_model)
+
     loaded_model.eval()
 
     sys.exit(app.exec_())
