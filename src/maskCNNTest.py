@@ -33,6 +33,8 @@ DATA_PATH = '../data/Apollo_16_Rev_17/'
 ANNOTATIONS_PATH = '../data/Apollo_16_Rev_17/crater17_annotations.json'
 DATA_PATH_TEST = '../data/Apollo_16_Rev_18/'
 ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_18/crater18_annotations.json'
+# DATA_PATH_TEST = '../data/Apollo_16_Rev_28/'
+# ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_28/crater28_annotations.json'
 # DATA_PATH_TEST = '../data/single_img/'
 # ANNOTATIONS_PATH_TEST = '../data/single_img/annotations.json'
 
@@ -157,14 +159,13 @@ def train_and_evaluate(dataset, data_loader, dataset_test, data_loader_test):
 
     # let's train it for x epochs
     num_epochs = 10
-    if train:
-        for epoch in range(num_epochs):
-            # train for one epoch, printing every 10 iterations
-            train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10)
-            # update the learning rate
-            lr_scheduler.step()
-            # evaluate on the test dataset
-            evaluate(model, data_loader_test, device=device)
+    for epoch in range(num_epochs):
+        # train for one epoch, printing every 10 iterations
+        train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10)
+        # update the learning rate
+        lr_scheduler.step()
+        # evaluate on the test dataset
+        evaluate(model, data_loader_test, device=device)
 
     # confirm finish
     print("Finished training and evaluating")
