@@ -19,7 +19,5 @@ def save_obj_to_file(filename, obj):
 
 
 def read_object_from_file(filename):
-
     obj = pickle.load(open(filename, 'rb'))
-
     return obj

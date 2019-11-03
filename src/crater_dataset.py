@@ -23,7 +23,7 @@ from torchvision.transforms import functional as F
 
 class crater_dataset(Dataset):
     """Crater dataset."""
-    def __init__(self, root_dir, annotations_file, transform=None):
+    def __init__(self, root_dir, annotations_file, transform=None, augmentation=None):
         """
         Args:
             annotations_file (string): Path to the json file with annotations.
@@ -41,6 +41,7 @@ class crater_dataset(Dataset):
         self.key_list = list(self.landmarks_frame.keys())
         self.root_dir = root_dir
         self.transform = transform
+        self.augmentation = augmentation
 
     def __len__(self):
         return len(self.key_list)
@@ -80,16 +81,10 @@ class crater_dataset(Dataset):
             color = (255 - (i + 1) * 2) % 255
             cv2.circle(img, center, radius, color, -1)
 
-        # note that we haven't converted the mask to RGB,
-        # because each color corresponds to a different instance
-        # with 0 being background
-        mask = cv2.cvtColor(segmented_image, cv2.COLOR_BGR2GRAY)
-
-        segmented_image = Image.fromarray(segmented_image)
-
         if not os.path.isdir(self.root_dir + "CraterMasks/"):
             os.mkdir(self.root_dir + "CraterMasks/")
-
+        mask = cv2.cvtColor(segmented_image, cv2.COLOR_BGR2GRAY)
+        segmented_image = Image.fromarray(segmented_image)
         segmented_image.save(self.root_dir + "CraterMasks/" +
                              self.landmarks_frame[idx_keys]['filename'].split(".")[0] +
                              "_mask.jpg")
@@ -124,11 +119,19 @@ class crater_dataset(Dataset):
         # there is only one class. and it is CRATER
         labels = torch.ones((num_objs,), dtype=torch.int64)
         masks = torch.as_tensor(masks, dtype=torch.uint8)
-
         area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
 
         # suppose all instances are not crowd
         is_crowd = torch.zeros((num_objs,), dtype=torch.int64)
+
+        if self.augmentation is not None:
+            aug = self.augmentation(image=image_tensor_to_nparray(image),
+                              mask=masks.numpy(),
+                              bbox=boxes)
+
+            image = torch.from_numpy(aug['image'].transpose((2, 0, 1))).float()
+            masks = torch.as_tensor(aug['mask'], dtype=torch.uint8)
+            boxes = aug['bbox']
 
         target = {"boxes": boxes,
                   "labels": labels,
@@ -136,6 +139,7 @@ class crater_dataset(Dataset):
                   "image_id": image_id,
                   "area": area,
                   "iscrowd": is_crowd}
+
 
         return image, target
 
@@ -245,7 +249,11 @@ def collate_fn_crater_padding(batch):
 def get_crater_image(root_dir='../data/Apollo_16_Rev_63/JPGImages/', image_name='random'):
     if image_name == 'random':
         image_name = random.choice(os.listdir(root_dir))
-        print(image_name)
     image = Image.open(root_dir + image_name)
     image_tensor = F.to_tensor(image)
     return image_tensor
+
+
+def image_tensor_to_nparray(image):
+    image = image.numpy().transpose(1, 2, 0)
+    return image

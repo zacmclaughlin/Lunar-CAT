@@ -30,11 +30,11 @@ import read_write_objects
 
 
 # Pathways
-DATA_PATH = '../data/Apollo_16_Rev_17/'
-ANNOTATIONS_PATH = '../data/Apollo_16_Rev_17/crater17_annotations.json'
+DATA_PATH = '../data/Apollo_16_Rev_18/'
+ANNOTATIONS_PATH = '../data/Apollo_16_Rev_18/crater18_annotations.json'
 
-DATA_PATH_TEST = '../data/Apollo_16_Rev_18/'
-ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_18/crater18_annotations.json'
+DATA_PATH_TEST = '../data/Apollo_16_Rev_28/'
+ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_28/crater28_annotations.json'
 
 LOAD_MODEL_FILE_AND_PATH = "../output/nov3_overnight_run_60images_20epochs.p"
 LOAD_OUTPUT_FILE_AND_PATH = ""
@@ -46,6 +46,10 @@ SAVE_MODEL_FILE_AND_PATH = "../output/model_at_time_" + currentDT + ".p"
 SAVE_OUTPUT_FILE_AND_PATH = "../output/output_at_time_" + currentDT + ".p"
 
 # Other dataset paths:
+# '../data/Apollo_16_Rev_17/'
+# '../data/Apollo_16_Rev_17/crater17_annotations.json'
+# '../data/Apollo_16_Rev_18/'
+# '../data/Apollo_16_Rev_18/crater18_annotations.json'
 # '../data/Apollo_16_Rev_28/'
 # '../data/Apollo_16_Rev_28/crater28_annotations.json'
 # '../data/Apollo_16_Rev_63/'
@@ -108,8 +112,8 @@ def get_crater_datasets(number_of_images):
         [crater_dataset.Rescale(401), crater_dataset.SquareCrop(400), crater_dataset.ToTensor()])
 
     # use our dataset and defined transformations
-    dataset = crater_dataset.crater_dataset(DATA_PATH, ANNOTATIONS_PATH, transform)
-    dataset_test = crater_dataset.crater_dataset(DATA_PATH_TEST, ANNOTATIONS_PATH_TEST, transform)
+    dataset = crater_dataset.crater_dataset(DATA_PATH, ANNOTATIONS_PATH, transform, augmentation=None)
+    dataset_test = crater_dataset.crater_dataset(DATA_PATH_TEST, ANNOTATIONS_PATH_TEST, transform, augmentation=None)
 
     # split the dataset in train and test set
     indices = torch.randperm(len(dataset)).tolist()
@@ -153,12 +157,12 @@ def train_and_evaluate(model, data_loader, data_loader_test, num_epochs):
         lr_scheduler.step()
         # evaluate on the test dataset
         evaluate(model, data_loader_test, device=device)
+        # intermediate saving
         torch.save(model.state_dict(), SAVE_MODEL_FILE_AND_PATH)
 
     # confirm finish
     print("Finished training and evaluating")
 
-    # torch.save(model.state_dict(), output_model_filename)
     return model
 
 
@@ -184,13 +188,11 @@ def get_display_widget(model, dataset):
                          (bounding_boxes[j][0], bounding_boxes[j][1]),
                          (bounding_boxes[j][2], bounding_boxes[j][3]),
                          (0, 255, 0), 1)
-        this_guess_mask = Image.fromarray(guess_mask)
-        
-        this_crater = Image.fromarray(this_crater)
 
+        this_guess_mask = Image.fromarray(guess_mask)
+        this_crater = Image.fromarray(this_crater)
         image_canvas = ImageView()
         image_canvas.set_image([this_crater, this_guess_mask])
-
         image_set[str(datum)] = image_canvas
 
     return ImageBook(image_set)  # return display widget
@@ -217,7 +219,7 @@ def main(arguments):
 
     run_type = get_run_type(arguments, len(arguments) - 1)
 
-    dataset, data_loader, dataset_test, data_loader_test = get_crater_datasets(number_of_images=3)
+    dataset, data_loader, dataset_test, data_loader_test = get_crater_datasets(number_of_images=20)
 
     if run_type == "-load":
         # Load the model
@@ -228,8 +230,8 @@ def main(arguments):
         model = train_and_evaluate(loaded_model, data_loader, data_loader_test, num_epochs=10)
 
         # Save the model
-        create_model_output(model, SAVE_OUTPUT_FILE_AND_PATH)
         torch.save(model.state_dict(), SAVE_MODEL_FILE_AND_PATH)
+        create_model_output(model, DATA_PATH_TEST, SAVE_OUTPUT_FILE_AND_PATH)
 
     elif run_type == "-viz":
         # Load the model
@@ -250,8 +252,8 @@ def main(arguments):
         model = train_and_evaluate(model, data_loader, data_loader_test, num_epochs=10)
 
         # Save the model
-        create_model_output(model, SAVE_OUTPUT_FILE_AND_PATH)
         torch.save(model.state_dict(), SAVE_MODEL_FILE_AND_PATH)
+        create_model_output(model, DATA_PATH_TEST, SAVE_OUTPUT_FILE_AND_PATH)
 
     else:
         print("Please choose from the following options: \n"

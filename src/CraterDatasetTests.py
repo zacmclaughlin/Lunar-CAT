@@ -22,8 +22,27 @@ MODEL_STORE_PATH = '../data/'
 
 DATA_PATH = '../data/Apollo_16_Rev_17/'
 ANNOTATIONS_PATH = '../data/Apollo_16_Rev_17/crater17_annotations.json'
-DATA_PATH_TEST = '../data/Apollo_16_Rev_17/'
-ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_17/crater17_annotations.json'
+DATA_PATH_TEST = '../data/Apollo_16_Rev_28/'
+ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_28/crater28_annotations.json'
+
+from albumentations import (
+    PadIfNeeded,
+    HorizontalFlip,
+    VerticalFlip,
+    CenterCrop,
+    Crop,
+    Compose,
+    Transpose,
+    RandomRotate90,
+    ElasticTransform,
+    GridDistortion,
+    OpticalDistortion,
+    RandomSizedCrop,
+    OneOf,
+    CLAHE,
+    RandomBrightnessContrast,
+    RandomGamma
+)
 
 transform = transforms.Compose([crater_dataset.Rescale(401), crater_dataset.SquareCrop(400), crater_dataset.ToTensor()])
 
@@ -38,19 +57,16 @@ test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size,
                          shuffle=False, collate_fn=crater_dataset.collate_fn_crater_padding)
 
 for i in range(len(train_dataset)):
-    sample = train_dataset[i]
+    aug = PadIfNeeded(p=1, min_height=400, min_width=400)
+    augmented = aug(image=train_dataset[i][0].numpy(),
+                    mask=train_dataset[i][1]['masks'].numpy(),
+                    bbox=train_dataset[i][1]['boxes'])
 
-# Train the model
-total_step = len(train_loader)
-loss_list = []
-acc_list = []
+    print(type(train_dataset[i][0]))
+    # train_dataset[i][0] = augmented['image']
+    # train_dataset[i][1]['mask'] = augmented['mask']
+    # train_dataset[i][1]['boxes'] = augmented['bbox']
 
-for epoch in range(num_epochs):
-    for i, batch_instance in enumerate(train_loader):
-        batch_instance, annotation_lengths, mask_status = batch_instance[0], batch_instance[1], batch_instance[2]
-        images = torch.stack([t[0] for t in batch_instance])
-        landmarks = torch.stack([t[1]['landmarks'] for t in batch_instance])
-        print("epoch: ", epoch, "| Batch: ", i)
 
 print("++++++++ Access Tests Passed ++++++++++")
 
