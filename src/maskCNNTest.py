@@ -211,8 +211,6 @@ def main(arguments):
 
     run_type = get_run_type(arguments, len(arguments) - 1)
 
-    print(run_type)
-
     dataset, data_loader, dataset_test, data_loader_test = get_crater_datasets(number_of_images=30)
 
     if run_type == "-load":
@@ -247,7 +245,11 @@ def main(arguments):
 
         # Save the model
         create_model_output(model, '../output', 'output.p')
-        torch.save(model.state_dict(),SAVE_MODEL_FILE_AND_PATH)
+        torch.save(model.state_dict(), SAVE_MODEL_FILE_AND_PATH)
+    else:
+        print("Please choose from the following options: \n"
+              "-viz, -new, -load \n"
+              "-new will be assumed if no flags are passed.")
 
 
 if __name__ == "__main__":
