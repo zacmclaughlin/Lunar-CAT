@@ -34,9 +34,12 @@ class crater_dataset(Dataset):
         self.landmarks_frame = json.load(open(annotations_file))
 
         self.key_list = list(self.landmarks_frame.keys())
+        # self.filename_dictionary = {}
         for i in range(len(self.landmarks_frame)):
             if len(self.landmarks_frame[self.key_list[i]]['regions']) == 0:
                 del self.landmarks_frame[self.key_list[i]]
+            # else:
+            #     self.filename_dictionary[self.landmarks_frame[self.key_list[i]]['filename']] = torch.as_tensor([1000])
 
         self.key_list = list(self.landmarks_frame.keys())
         self.root_dir = root_dir
@@ -91,6 +94,20 @@ class crater_dataset(Dataset):
 
         # convert the PIL Image into a numpy array
         mask = np.array(mask)
+
+        if self.augmentation is not None:
+            aug = self.augmentation(image=image_tensor_to_nparray(image),
+                                    mask=mask)
+            if not os.path.isdir(self.root_dir + "ModifiedCraterMasks/"):
+                os.mkdir(self.root_dir + "ModifiedCraterMasks/")
+            mask_modified = Image.fromarray(aug["mask"])
+            mask_modified.save(self.root_dir + "ModifiedCraterMasks/" +
+                                 self.landmarks_frame[idx_keys]['filename'].split(".")[0] +
+                                 "_modified_mask.jpg")
+
+            image = torch.from_numpy(aug['image'].transpose((2, 0, 1))).float()
+            mask = aug['mask']
+
         # instances are encoded as different colors
         obj_ids = np.unique(mask)
         # first id is the background, so remove it
@@ -124,20 +141,12 @@ class crater_dataset(Dataset):
         # suppose all instances are not crowd
         is_crowd = torch.zeros((num_objs,), dtype=torch.int64)
 
-        if self.augmentation is not None:
-            aug = self.augmentation(image=image_tensor_to_nparray(image),
-                              mask=masks.numpy(),
-                              bbox=boxes)
-
-            image = torch.from_numpy(aug['image'].transpose((2, 0, 1))).float()
-            masks = torch.as_tensor(aug['mask'], dtype=torch.uint8)
-            boxes = aug['bbox']
-
         target = {"boxes": boxes,
                   "labels": labels,
                   "masks": masks,
                   "image_id": image_id,
                   "area": area,
+                  "filename": self.landmarks_frame[idx_keys]['filename'],
                   "iscrowd": is_crowd}
 
 

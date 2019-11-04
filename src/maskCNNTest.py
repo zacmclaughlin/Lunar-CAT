@@ -131,19 +131,12 @@ def get_crater_datasets(number_of_images):
     transform = transforms.Compose(
         [crater_dataset.Rescale(401), crater_dataset.SquareCrop(400), crater_dataset.ToTensor()])
 
-    aug = PadIfNeeded(p=1, min_height=400, min_width=400)
     aug = Compose([PadIfNeeded(p=1, min_height=400, min_width=400),
-                   VerticalFlip(p=0.5),
-                   RandomRotate90(p=0.5),
-                   # OneOf([
-                   #     ElasticTransform(p=0.5, alpha=120, sigma=120 * 0.05, alpha_affine=120 * 0.03),
-                   #     GridDistortion(p=0.5),
-                   #     OpticalDistortion(p=1, distort_limit=2, shift_limit=0.5)
-                   # ],
-                   # p=0.8),
-                   # CLAHE(p=0.8),
-                   # RandomBrightnessContrast(p=0.8),
-                   # RandomGamma(p=0.8)
+                   # VerticalFlip(p=0.65),
+                   # RandomRotate90(p=0.7),
+                   # GridDistortion(p=1),
+                   Transpose(p=1),
+                   OpticalDistortion(p=1, distort_limit=.5, shift_limit=0.2)
                    ])
 
     # use our dataset and defined transformations
@@ -207,7 +200,7 @@ def get_display_widget(model, dataset):
         # train on the GPU or on the CPU, if a GPU is not available
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         # pick one image from the test set
-        img, _ = dataset[datum]
+        img, target = dataset[datum]
         # put the model in evaluation mode
         model.eval()
         with torch.no_grad():
@@ -227,7 +220,7 @@ def get_display_widget(model, dataset):
         this_guess_mask = Image.fromarray(guess_mask)
         this_crater = Image.fromarray(this_crater)
         image_canvas = ImageView()
-        image_canvas.set_image([this_crater, this_guess_mask])
+        image_canvas.set_image([this_crater, this_guess_mask], target)
         image_set[str(datum)] = image_canvas
 
     return ImageBook(image_set)  # return display widget

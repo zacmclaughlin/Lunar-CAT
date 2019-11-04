@@ -73,10 +73,9 @@ class ImageView(QWidget):
         self.font.setPointSize(1)
         self.canvas.show()
 
-    def set_image(self, images):
-        if (len(images) % 2) is not 0:
-            images = images[:-1]
+    def set_image(self, images, target):
         for i in range(len(images)):
             self.axes.append(self.fig.add_subplot(1, len(images), i+1))
             self.axes[i].imshow(images[i])
+        self.fig.suptitle(target['filename'])
         self.canvas.draw()
