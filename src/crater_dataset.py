@@ -90,7 +90,7 @@ class crater_dataset(Dataset):
         segmented_image = Image.fromarray(segmented_image)
         segmented_image.save(self.root_dir + "CraterMasks/" +
                              self.landmarks_frame[idx_keys]['filename'].split(".")[0] +
-                             "_mask.jpg")
+                             "-mask.jpg")
 
         # convert the PIL Image into a numpy array
         mask = np.array(mask)
@@ -103,7 +103,7 @@ class crater_dataset(Dataset):
             mask_modified = Image.fromarray(aug["mask"])
             mask_modified.save(self.root_dir + "ModifiedCraterMasks/" +
                                  self.landmarks_frame[idx_keys]['filename'].split(".")[0] +
-                                 "_modified_mask.jpg")
+                                 "-modified_mask.jpg")
 
             image = torch.from_numpy(aug['image'].transpose((2, 0, 1))).float()
             mask = aug['mask']
@@ -146,9 +146,10 @@ class crater_dataset(Dataset):
                   "masks": masks,
                   "image_id": image_id,
                   "area": area,
-                  "filename": self.landmarks_frame[idx_keys]['filename'],
+                  # this will cause a crash if you dont have a filename with structure:
+                  # "###-#-NUMBERS.jpg"
+                  "filename": torch.tensor(int(self.landmarks_frame[idx_keys]['filename'].split("-")[2].split(".")[0])),
                   "iscrowd": is_crowd}
-
 
         return image, target
 

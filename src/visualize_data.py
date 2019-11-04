@@ -77,5 +77,5 @@ class ImageView(QWidget):
         for i in range(len(images)):
             self.axes.append(self.fig.add_subplot(1, len(images), i+1))
             self.axes[i].imshow(images[i])
-        self.fig.suptitle(target['filename'])
+        self.fig.suptitle("AS16-M-" + target['filename'] + ".jpg")
         self.canvas.draw()

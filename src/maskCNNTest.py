@@ -132,11 +132,11 @@ def get_crater_datasets(number_of_images):
         [crater_dataset.Rescale(401), crater_dataset.SquareCrop(400), crater_dataset.ToTensor()])
 
     aug = Compose([PadIfNeeded(p=1, min_height=400, min_width=400),
-                   # VerticalFlip(p=0.65),
-                   # RandomRotate90(p=0.7),
-                   # GridDistortion(p=1),
-                   Transpose(p=1),
-                   OpticalDistortion(p=1, distort_limit=.5, shift_limit=0.2)
+                   VerticalFlip(p=0.65),
+                   RandomRotate90(p=0.7),
+                   GridDistortion(p=1),
+                   # Transpose(p=1),
+                   # OpticalDistortion(p=1, distort_limit=.5, shift_limit=0.2)
                    ])
 
     # use our dataset and defined transformations
