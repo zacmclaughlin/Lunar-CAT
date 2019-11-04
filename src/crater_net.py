@@ -11,6 +11,7 @@ from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor
 
 # import system hooks
 import sys
+import os
 from os import listdir
 from os.path import isfile, join
 import datetime
@@ -194,7 +195,7 @@ def train_and_evaluate(model, data_loader, data_loader_test, num_epochs):
     return model
 
 
-def get_display_widget(model, dataset):
+def get_display_widget(model, dataset, save_masks=False):
     image_set = {}
     for datum in range(len(dataset)):
         # train on the GPU or on the CPU, if a GPU is not available
@@ -222,6 +223,18 @@ def get_display_widget(model, dataset):
         image_canvas = ImageView()
         image_canvas.set_image([this_crater, this_guess_mask], target)
         image_set[str(datum)] = image_canvas
+
+        if save_masks:
+            if not os.path.isdir("../output/PredictedCraterMasks/"):
+                os.mkdir("../output/PredictedCraterMasks/")
+            this_guess_mask.save("../output/PredictedCraterMasks/AS16-M-0" +
+                                 str(target['filename'].numpy()) +
+                                 "-predicted_mask.jpg")
+            if not os.path.isdir("../output/BoundedCraters/"):
+                os.mkdir("../output/BoundedCraters/")
+            this_crater.save("../output/BoundedCraters/AS16-M-0" +
+                             str(target['filename'].numpy()) +
+                             "-with_bboxes.jpg")
 
     return ImageBook(image_set)  # return display widget
 
@@ -269,7 +282,7 @@ def main(arguments):
 
         # Visualize the model
         app = QApplication(sys.argv)
-        image_book = get_display_widget(model=loaded_model, dataset=dataset_test)
+        image_book = get_display_widget(model=loaded_model, dataset=dataset_test, save_masks=True)
         image_book.show()
         sys.exit(app.exec_())
 
