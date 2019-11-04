@@ -50,13 +50,13 @@ import read_write_objects
 
 
 # Pathways
-DATA_PATH = '../data/Apollo_16_Rev_18/'
-ANNOTATIONS_PATH = '../data/Apollo_16_Rev_18/crater18_annotations.json'
+DATA_PATH = '../data/Apollo_16_Rev_17/'
+ANNOTATIONS_PATH = '../data/Apollo_16_Rev_17/crater17_annotations.json'
 
 DATA_PATH_TEST = '../data/Apollo_16_Rev_28/'
 ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_28/crater28_annotations.json'
 
-LOAD_MODEL_FILE_AND_PATH = "../output/nov3_overnight_run_60images_20epochs.p"
+LOAD_MODEL_FILE_AND_PATH = "../output/model_at_time_2019-11-04--15-18-00.p"
 LOAD_OUTPUT_FILE_AND_PATH = ""
 
 currentDT = datetime.datetime.now()
@@ -247,7 +247,7 @@ def main(arguments):
 
     run_type = get_run_type(arguments, len(arguments) - 1)
 
-    dataset, data_loader, dataset_test, data_loader_test = get_crater_datasets(number_of_images=2)
+    dataset, data_loader, dataset_test, data_loader_test = get_crater_datasets(number_of_images=20)
 
     if run_type == "-load":
         # Load the model
@@ -255,11 +255,12 @@ def main(arguments):
         loaded_model = load_model_instance_segmentation(2, loaded_model)
 
         # Train the model
-        model = train_and_evaluate(loaded_model, data_loader, data_loader_test, num_epochs=1)
+        model = train_and_evaluate(loaded_model, data_loader, data_loader_test, num_epochs=10)
 
         # Save the model
         torch.save(model.state_dict(), SAVE_MODEL_FILE_AND_PATH)
-        create_model_output(model, DATA_PATH_TEST, SAVE_OUTPUT_FILE_AND_PATH)
+        # THIS IS BROKEN
+        # create_model_output(model, DATA_PATH_TEST, SAVE_OUTPUT_FILE_AND_PATH)
 
     elif run_type == "-viz":
         # Load the model
@@ -281,7 +282,8 @@ def main(arguments):
 
         # Save the model
         torch.save(model.state_dict(), SAVE_MODEL_FILE_AND_PATH)
-        create_model_output(model, DATA_PATH_TEST, SAVE_OUTPUT_FILE_AND_PATH)
+        # THIS IS BROKEN
+        # create_model_output(model, DATA_PATH_TEST, SAVE_OUTPUT_FILE_AND_PATH)
 
     else:
         print("Please choose from the following options: \n"
