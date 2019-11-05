@@ -225,14 +225,15 @@ def get_display_widget(model, dataset, save_masks=False, attempt_centroid=False)
 
         image_canvas = ImageView()
         if attempt_centroid:
-            this_centroided_mask, this_centroided_crater = \
+            this_centroided_crater, this_centroided_mask = \
                 post_processing.get_centroid_craters(this_crater,
                                                      np.uint8(guess_mask),
                                                      path_and_filename_to_save='../output/CentroidCraterMasks/' +
                                                                                "AS16-M-0" +
                                                                                str(target['filename'].numpy()) +
                                                                                '-predicted_mask_centroid.jpg')
-
+            this_centroided_mask = Image.fromarray(this_centroided_mask).convert('LA')
+            this_centroided_crater = Image.fromarray(this_centroided_crater)
             image_canvas.set_image([this_centroided_crater, this_centroided_mask], target)
         else:
             image_canvas.set_image([this_crater_image, this_guess_mask], target)

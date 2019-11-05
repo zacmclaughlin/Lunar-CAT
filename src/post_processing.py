@@ -4,8 +4,6 @@ import imutils
 
 
 def centroid(crater_image, segment_image):
-    #print('channels: ', segment_image.shape[2])
-    #image_gray = cv2.cvtColor(segment_image, cv2.COLOR_BGR2GRAY)
     thresh = cv2.threshold(segment_image, 10, 255, cv2.THRESH_BINARY)[1]
     contour_areas = cv2.findContours(thresh.copy(),
                                      cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -25,14 +23,14 @@ def centroid(crater_image, segment_image):
             print('x:', cX, ' y:', cY, ' area:', cv2.contourArea(c))
 
             # draw the contour and center of the shape on the image
-            cv2.drawContours(segment_image, [c], -1, (0, 255, 0), 2)
+            # cv2.drawContours(segment_image, [c], -1, (0, 255, 0), 2)
             cv2.circle(segment_image, (cX, cY), 3, (0, 0, 255), -1)
-            cv2.putText(segment_image,
-                        '(' + str(cX) + ',' + str(cY) + ')',
-                        (cX - 10, cY - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.5,
-                        (255, 0, 0), 2)
+            # cv2.putText(segment_image,
+            #             '(' + str(cX) + ',' + str(cY) + ')',
+            #             (cX - 10, cY - 10),
+            #             cv2.FONT_HERSHEY_SIMPLEX,
+            #             0.5,
+            #             (255, 0, 0), 2)
             cv2.circle(crater_image, (cX, cY), 3, (0, 0, 255), -1)
     return crater_image, segment_image
 
