@@ -57,7 +57,7 @@ ANNOTATIONS_PATH = '../data/Apollo_16_Rev_17/crater17_annotations.json'
 DATA_PATH_TEST = '../data/Apollo_16_Rev_28/'
 ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_28/crater28_annotations.json'
 
-LOAD_MODEL_FILE_AND_PATH = "../output/model_at_time_2019-11-04--15-18-00.p"
+LOAD_MODEL_FILE_AND_PATH = "../output/model_at_time_2019-11-04--16-51-55.p"
 LOAD_OUTPUT_FILE_AND_PATH = ""
 
 currentDT = datetime.datetime.now()
@@ -227,12 +227,14 @@ def get_display_widget(model, dataset, save_masks=False):
         if save_masks:
             if not os.path.isdir("../output/PredictedCraterMasks/"):
                 os.mkdir("../output/PredictedCraterMasks/")
-            cv2.cvtColor(this_guess_mask, cv2.COLOR_GRAY2RGB).save("../output/PredictedCraterMasks/AS16-M-0" +
+            new_crater_mask = this_guess_mask.convert('RGB')
+            new_crater_mask.save("../output/PredictedCraterMasks/AS16-M-0" +
                                  str(target['filename'].numpy()) +
                                  "-predicted_mask.jpg")
             if not os.path.isdir("../output/BoundedCraters/"):
                 os.mkdir("../output/BoundedCraters/")
-            this_crater.save("../output/BoundedCraters/AS16-M-0" +
+            new_crater = this_crater.convert('RGB')
+            new_crater.save("../output/BoundedCraters/AS16-M-0" +
                              str(target['filename'].numpy()) +
                              "-with_bboxes.jpg")
 
