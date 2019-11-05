@@ -1,5 +1,5 @@
 import cv2
-# import numpy as np
+import numpy as np
 import imutils
 
 
@@ -7,18 +7,12 @@ def centroid(crater_image, segment_image):
     #print('channels: ', segment_image.shape[2])
     #image_gray = cv2.cvtColor(segment_image, cv2.COLOR_BGR2GRAY)
     thresh = cv2.threshold(segment_image, 10, 255, cv2.THRESH_BINARY)[1]
-    print(type(thresh))
-    print(thresh.shape)
-    for line in thresh:
-        print(type(line[0]))
-
     contour_areas = cv2.findContours(thresh.copy(),
                                      cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contour_areas = imutils.grab_contours(contour_areas)
     contour_areas = sorted(contour_areas,
                            key=cv2.contourArea,
                            reverse=True)
-    print(type(contour_areas))
 
     if len(contour_areas) > 0: #need check to handle images without identified crater contours
         for c in contour_areas:
@@ -40,15 +34,12 @@ def centroid(crater_image, segment_image):
                         0.5,
                         (255, 0, 0), 2)
             cv2.circle(crater_image, (cX, cY), 3, (0, 0, 255), -1)
-    print(crater_image.shape)
-    print(segment_image.shape)
     return crater_image, segment_image
 
 
 def get_centroid_craters(crater_image, segmentation_mask, path_and_filename_to_save):
 
     crater_image, segmentation_mask = centroid(crater_image, segmentation_mask)
-    #print(crater_image.shape)
     cv2.imwrite(path_and_filename_to_save, segmentation_mask)
     return crater_image, segmentation_mask
 
