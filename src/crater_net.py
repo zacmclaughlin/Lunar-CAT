@@ -48,6 +48,7 @@ from engine import train_one_epoch, evaluate
 import crater_dataset
 from visualize_data import ImageView, ImageBook
 import read_write_objects
+import post_processing
 
 
 # Pathways
@@ -196,7 +197,7 @@ def train_and_evaluate(model, data_loader, data_loader_test, num_epochs):
     return model
 
 
-def get_display_widget(model, dataset, save_masks=False):
+def get_display_widget(model, dataset, save_masks=False, attempt_centroid=False):
     image_set = {}
     for datum in range(len(dataset)):
         # train on the GPU or on the CPU, if a GPU is not available
@@ -220,9 +221,22 @@ def get_display_widget(model, dataset, save_masks=False):
                          (0, 255, 0), 1)
 
         this_guess_mask = Image.fromarray(guess_mask)
-        this_crater = Image.fromarray(this_crater)
+        this_crater_image = Image.fromarray(this_crater)
+
         image_canvas = ImageView()
-        image_canvas.set_image([this_crater, this_guess_mask], target)
+
+        if attempt_centroid:
+            this_centroided_mask, this_centroided_crater = \
+                post_processing.get_centroid_craters(this_crater,
+                                                     guess_mask,
+                                                     path_and_filename_to_save='../output/CentroidCraterMasks/' +
+                                                                               "AS16-M-0" +
+                                                                               str(target['filename'].numpy()) +
+                                                                               '-predicted_mask_centroid.jpg')
+            image_canvas.set_image([this_centroided_crater, this_centroided_mask], target)
+        else:
+            image_canvas.set_image([this_crater_image, this_guess_mask], target)
+
         image_set[str(datum)] = image_canvas
 
         if save_masks:
@@ -234,7 +248,7 @@ def get_display_widget(model, dataset, save_masks=False):
                                  "-predicted_mask.jpg")
             if not os.path.isdir("../output/BoundedCraters/"):
                 os.mkdir("../output/BoundedCraters/")
-            new_crater = this_crater.convert('RGB')
+            new_crater = this_crater_image.convert('RGB')
             new_crater.save("../output/BoundedCraters/AS16-M-0" +
                              str(target['filename'].numpy()) +
                              "-with_bboxes.jpg")
@@ -285,7 +299,10 @@ def main(arguments):
 
         # Visualize the model
         app = QApplication(sys.argv)
-        image_book = get_display_widget(model=loaded_model, dataset=dataset_test, save_masks=True)
+        image_book = get_display_widget(model=loaded_model,
+                                        dataset=dataset_test,
+                                        save_masks=True,
+                                        attempt_centroid=True)
         image_book.show()
         sys.exit(app.exec_())
 

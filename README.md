@@ -17,6 +17,7 @@ Dependencies:
 - matplotlib
 - numpy
 - albumentations
+- imutils
 
 A custom crater dataset class was created to fit with the pytorch training process shown at https://github.com/pytorch/vision/tree/master/references/detection. Some of these files have been used within the git repository to aid in training and processing. 
 
