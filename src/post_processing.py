@@ -4,7 +4,7 @@ import imutils
 
 
 def centroid(crater_image, segment_image):
-    thresh = cv2.threshold(segment_image, 10, 255, cv2.THRESH_BINARY)[1]
+    thresh = cv2.threshold(segment_image, 110, 255, cv2.THRESH_BINARY)[1]
     contour_areas = cv2.findContours(thresh.copy(),
                                      cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contour_areas = imutils.grab_contours(contour_areas)
@@ -17,10 +17,12 @@ def centroid(crater_image, segment_image):
 
             # compute the center of the contour
             M = cv2.moments(c)
-            cX = int(M["m10"] / M["m00"])
-            cY = int(M["m01"] / M["m00"])
-
-            print('x:', cX, ' y:', cY, ' area:', cv2.contourArea(c))
+            # calculate x,y coordinate of center
+            if M["m00"] != 0:
+                cX = int(M["m10"] / M["m00"])
+                cY = int(M["m01"] / M["m00"])
+            else:
+                cX, cY = 0, 0
 
             # draw the contour and center of the shape on the image
             # cv2.drawContours(segment_image, [c], -1, (0, 255, 0), 2)
