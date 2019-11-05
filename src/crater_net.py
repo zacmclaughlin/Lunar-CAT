@@ -58,7 +58,7 @@ ANNOTATIONS_PATH = '../data/Apollo_16_Rev_63/crater63_annotations.json'
 DATA_PATH_TEST = '../data/Apollo_16_Rev_28/'
 ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_28/crater28_annotations.json'
 
-LOAD_MODEL_FILE_AND_PATH = "../output/model_at_time_2019-11-05--02-02-09.p"
+LOAD_MODEL_FILE_AND_PATH = "../output/model_at_time_2019-11-05--00-18-10.p"
 LOAD_OUTPUT_FILE_AND_PATH = ""
 
 currentDT = datetime.datetime.now()
@@ -224,15 +224,18 @@ def get_display_widget(model, dataset, save_masks=False, attempt_centroid=False)
         this_crater_image = Image.fromarray(this_crater)
 
         image_canvas = ImageView()
-
+        print(guess_mask.shape)
         if attempt_centroid:
             this_centroided_mask, this_centroided_crater = \
-                post_processing.get_centroid_craters(this_crater,
-                                                     guess_mask,
+                post_processing.get_centroid_craters(cv2.cvtColor(this_crater, cv2.COLOR_BGR2GRAY),
+                                                     np.uint8(guess_mask),
                                                      path_and_filename_to_save='../output/CentroidCraterMasks/' +
                                                                                "AS16-M-0" +
                                                                                str(target['filename'].numpy()) +
                                                                                '-predicted_mask_centroid.jpg')
+
+            print(this_centroided_mask.shape)
+            print(this_centroided_crater.shape)
             image_canvas.set_image([this_centroided_crater, this_centroided_mask], target)
         else:
             image_canvas.set_image([this_crater_image, this_guess_mask], target)
@@ -277,7 +280,7 @@ def main(arguments):
 
     run_type = get_run_type(arguments, len(arguments) - 1)
 
-    dataset, data_loader, dataset_test, data_loader_test = get_crater_datasets(number_of_images=20, all_images=False)
+    dataset, data_loader, dataset_test, data_loader_test = get_crater_datasets(number_of_images=2, all_images=False)
 
     if run_type == "-load":
         # Load the model
