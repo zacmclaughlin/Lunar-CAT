@@ -227,7 +227,7 @@ def get_display_widget(model, dataset, save_masks=False):
         if save_masks:
             if not os.path.isdir("../output/PredictedCraterMasks/"):
                 os.mkdir("../output/PredictedCraterMasks/")
-            this_guess_mask.save("../output/PredictedCraterMasks/AS16-M-0" +
+            cv2.cvtColor(this_guess_mask, cv2.COLOR_GRAY2RGB).save("../output/PredictedCraterMasks/AS16-M-0" +
                                  str(target['filename'].numpy()) +
                                  "-predicted_mask.jpg")
             if not os.path.isdir("../output/BoundedCraters/"):
