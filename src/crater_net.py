@@ -57,7 +57,7 @@ ANNOTATIONS_PATH = '../data/Apollo_16_Rev_17/crater17_annotations.json'
 DATA_PATH_TEST = '../data/Apollo_16_Rev_28/'
 ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_28/crater28_annotations.json'
 
-LOAD_MODEL_FILE_AND_PATH = "../output/model_at_time_2019-11-04--16-51-55.p"
+LOAD_MODEL_FILE_AND_PATH = "../output/model_at_time_2019-11-04--16-52-14.p"
 LOAD_OUTPUT_FILE_AND_PATH = ""
 
 currentDT = datetime.datetime.now()
@@ -127,7 +127,7 @@ def create_model_output(model, path_to_images, model_filename=SAVE_OUTPUT_FILE_A
     return output
 
 
-def get_crater_datasets(number_of_images):
+def get_crater_datasets(number_of_images, all_images=True):
 
     transform = transforms.Compose(
         [crater_dataset.Rescale(401), crater_dataset.SquareCrop(400), crater_dataset.ToTensor()])
@@ -145,10 +145,11 @@ def get_crater_datasets(number_of_images):
     dataset_test = crater_dataset.crater_dataset(DATA_PATH_TEST, ANNOTATIONS_PATH_TEST, transform, augmentation=aug)
 
     # split the dataset in train and test set
-    indices = torch.randperm(len(dataset)).tolist()
-    dataset = torch.utils.data.Subset(dataset, indices[-number_of_images:])
-    indices = torch.randperm(len(dataset_test)).tolist()
-    dataset_test = torch.utils.data.Subset(dataset_test, indices[-number_of_images:])
+    if not all_images:
+        indices = torch.randperm(len(dataset)).tolist()
+        dataset = torch.utils.data.Subset(dataset, indices[-number_of_images:])
+        indices = torch.randperm(len(dataset_test)).tolist()
+        dataset_test = torch.utils.data.Subset(dataset_test, indices[-number_of_images:])
 
     # define training and validation data loaders
     data_loader = torch.utils.data.DataLoader(
@@ -262,7 +263,7 @@ def main(arguments):
 
     run_type = get_run_type(arguments, len(arguments) - 1)
 
-    dataset, data_loader, dataset_test, data_loader_test = get_crater_datasets(number_of_images=20)
+    dataset, data_loader, dataset_test, data_loader_test = get_crater_datasets(number_of_images=20, all_images=True)
 
     if run_type == "-load":
         # Load the model
