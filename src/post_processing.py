@@ -32,8 +32,6 @@ def centroid_craters(crater_image, segmentation_mask, filename_output_satellite_
         cv2.circle(image, (cX, cY), 3, (0, 0, 255), -1)
         cv2.putText(image,'('+str(cX)+','+str(cY)+')',(cX - 10, cY - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
 
-
-
     cv2.imwrite(filename_output_satellite_image, image)
 
     return
