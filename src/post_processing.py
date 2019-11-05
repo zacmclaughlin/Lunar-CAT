@@ -1,32 +1,46 @@
 import cv2
+# import numpy as np
+import imutils
 
+def centroid_craters(crater_image, segmentation_mask, filename_output_satellite_image):
 
-def centroid_craters(crater_image, segmentation_mask):
-    """
-    :param crater_image: crater image (without bounding boxes)
-    :param segmentation_mask: numpy array for a segmentation mask
-    :return: crater with segment centroids superimposed on image
-    """
-    # convert the grayscale image to binary image
-    ret, thresh = cv2.threshold(segmentation_mask, 127, 255, 0)
+    image = cv2.imread(segmentation_mask)
+    image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-    # find contours in the binary image
-    img, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    for c in contours:
-        # calculate moments for each contour
+    # img = cv2.bitwise_not(img)
+    thresh = cv2.threshold(image_gray, 110, 255, cv2.THRESH_BINARY)[1]
+
+    cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
+                            cv2.CHAIN_APPROX_SIMPLE)
+    cnts = imutils.grab_contours(cnts)
+
+    # cnts = cnts[0] if imutils.is_cv2() else cnts[1]
+    # cntsSorted = sorted(cnts, key=lambda x: cv2.contourArea(x))
+    cnts = sorted(cnts, key=cv2.contourArea, reverse=True)
+
+    for c in cnts[:3]:
+
+        # compute the center of the contour
         M = cv2.moments(c)
-
-    # calculate x,y coordinate of center
-    if M["m00"] != 0:
         cX = int(M["m10"] / M["m00"])
         cY = int(M["m01"] / M["m00"])
-    else:
-        cX, cY = 0, 0
-    cv2.circle(img, (cX, cY), 5, (255, 255, 255), -1)
-    cv2.putText(img, "centroid", (cX - 25, cY - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
-    # display the image
-    cv2.imshow("Image", img)
-    cv2.waitKey(0)
+        print('x:', cX, ' y:', cY,' area:', cv2.contourArea(c))
+
+        # draw the contour and center of the shape on the image
+        cv2.drawContours(image, [c], -1, (0, 255, 0), 2)
+        cv2.circle(image, (cX, cY), 3, (0, 0, 255), -1)
+        cv2.putText(image,'('+str(cX)+','+str(cY)+')',(cX - 10, cY - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+
+
+
+    cv2.imwrite(filename_output_satellite_image, image)
 
     return
+
+
+
+segmentation_mask = '../output/PredictedCraterMasks/AS16-M-0872-predicted_mask.jpg'
+crater_image = '../output/BoundedCraters/AS16-M-0872-with_bboxes.jpg'
+centroid_craters(crater_image, segmentation_mask,
+                 '../output/CentroidCraterMasks/AS16-M-0872-predicted_mask_centroid.jpg')
