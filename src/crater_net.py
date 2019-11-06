@@ -55,10 +55,10 @@ import post_processing
 DATA_PATH = '../data/Apollo_16_Rev_63/'
 ANNOTATIONS_PATH = '../data/Apollo_16_Rev_63/crater63_annotations.json'
 
-DATA_PATH_TEST = '../data/Apollo_16_Rev_28/'
-ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_28/crater28_annotations.json'
+DATA_PATH_TEST = '../data/Apollo_16_Rev_18/'
+ANNOTATIONS_PATH_TEST = '../data/Apollo_16_Rev_18/crater18_annotations.json'
 
-LOAD_MODEL_FILE_AND_PATH = "../output/model_at_time_2019-11-05--02-02-09.p"
+LOAD_MODEL_FILE_AND_PATH = "../output/model_at_time_2019-11-05--00-18-10.p"
 LOAD_OUTPUT_FILE_AND_PATH = ""
 
 currentDT = datetime.datetime.now()
@@ -134,9 +134,9 @@ def get_crater_datasets(number_of_images, all_images=True):
         [crater_dataset.Rescale(401), crater_dataset.SquareCrop(400), crater_dataset.ToTensor()])
 
     aug = Compose([PadIfNeeded(p=1, min_height=400, min_width=400),
-                   VerticalFlip(p=0.65),
-                   RandomRotate90(p=0.7),
-                   GridDistortion(p=1),
+                   #VerticalFlip(p=0.65),
+                   #RandomRotate90(p=0.7),
+                   #GridDistortion(p=1),
                    # Transpose(p=1),
                    # OpticalDistortion(p=1, distort_limit=.5, shift_limit=0.2)
                    ])
@@ -199,7 +199,13 @@ def train_and_evaluate(model, data_loader, data_loader_test, num_epochs):
 
 def get_display_widget(model, dataset, save_masks=False, attempt_centroid=False):
     image_set = {}
+
+    # print(dataset[0][1]['area'])
+
     for datum in range(len(dataset)):
+        # print(datum)
+        bounding_area = dataset[datum][1]['area']
+        print(bounding_area)
         # train on the GPU or on the CPU, if a GPU is not available
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         # pick one image from the test set
@@ -212,13 +218,32 @@ def get_display_widget(model, dataset, save_masks=False, attempt_centroid=False)
         this_crater = img.mul(255).permute(1, 2, 0).byte().numpy()
         guess_mask = np.zeros((prediction[0]['masks'].shape[2], prediction[0]['masks'].shape[3]))
         bounding_boxes = np.asarray(prediction[0]['boxes'])
+        print(bounding_boxes.shape)
+        # print(float(prediction[0]['scores'][0]))
         for j in range(int(prediction[0]['masks'].shape[0]/10)):
-            mask = prediction[0]['masks'][j, 0].mul(255).byte().cpu().numpy()
-            guess_mask = guess_mask + mask        
-            this_crater = cv2.rectangle(this_crater,
-                         (bounding_boxes[j][0], bounding_boxes[j][1]),
-                         (bounding_boxes[j][2], bounding_boxes[j][3]),
-                         (0, 255, 0), 1)
+            # if float(bounding_area[j]) > 10000.0:
+            #     continue
+
+            if float(prediction[0]['scores'][j]) > 0.6:
+                mask = prediction[0]['masks'][j, 0].mul(255).byte().cpu().numpy()
+                guess_mask = guess_mask + mask
+
+                # length = (bounding_boxes[j][0])
+                area = (bounding_boxes[j][3] - bounding_boxes[j][1])*(bounding_boxes[j][2] - bounding_boxes[j][0])
+                print(area)
+                if area > 10000:
+                    continue
+                else:
+
+                # print((bounding_boxes[j][0]))
+                # print((bounding_boxes[j][1]))
+                # print((bounding_boxes[j][2]))
+                # print((bounding_boxes[j][3]))
+
+                    this_crater = cv2.rectangle(this_crater,
+                                 (bounding_boxes[j][0], bounding_boxes[j][1]),
+                                 (bounding_boxes[j][2], bounding_boxes[j][3]),
+                                 (0, 255, 0), 3)
 
         this_guess_mask = Image.fromarray(guess_mask)
         this_crater_image = Image.fromarray(this_crater)
@@ -232,7 +257,8 @@ def get_display_widget(model, dataset, save_masks=False, attempt_centroid=False)
                                                                                "AS16-M-0" +
                                                                                str(target['filename'].numpy()) +
                                                                                '-predicted_mask_centroid.jpg')
-            this_centroided_mask = Image.fromarray(this_centroided_mask).convert('LA')
+            this_centroided_mask = Image.fromarray(this_centroided_mask) #.convert('LA')
+            print(this_centroided_crater.shape)
             this_centroided_crater = Image.fromarray(this_centroided_crater)
             image_canvas.set_image([this_centroided_crater, this_centroided_mask], target)
         else:
@@ -278,7 +304,7 @@ def main(arguments):
 
     run_type = get_run_type(arguments, len(arguments) - 1)
 
-    dataset, data_loader, dataset_test, data_loader_test = get_crater_datasets(number_of_images=2, all_images=False)
+    dataset, data_loader, dataset_test, data_loader_test = get_crater_datasets(number_of_images=2, all_images=True)
 
     if run_type == "-load":
         # Load the model
@@ -303,7 +329,7 @@ def main(arguments):
         image_book = get_display_widget(model=loaded_model,
                                         dataset=dataset_test,
                                         save_masks=True,
-                                        attempt_centroid=True)
+                                        attempt_centroid=False)
         image_book.show()
         sys.exit(app.exec_())
 

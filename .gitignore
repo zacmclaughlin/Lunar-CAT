@@ -9,3 +9,4 @@ __pycache__
 __pycache__/crater_dataset.cpython-36.pyc
 sofia/PennFudanPed/
 *.p
+*.html
